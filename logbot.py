@@ -4,9 +4,9 @@ import sys
 
 class LogBot(irclib.SimpleIRCClient):
     def __init__(self):
-        logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+        logging.basicConfig(format="%(message)s", level=logging.DEBUG, stream=sys.stdout)
         irclib.SimpleIRCClient.__init__(self)
-        for e in irclib.protocol_events:
+        for e in irclib.all_events:
             self.connection.add_global_handler(e, self.lograw, -20)
         self.connection.add_global_handler("welcome", self._on_welcome, -10)
         logging.debug("Logging IRC...")
