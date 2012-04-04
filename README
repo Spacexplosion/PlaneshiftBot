@@ -1,0 +1,5 @@
+Copy sample_config.py to what will be the bot's working directory and rename to config.py .
+
+Starting the bot:
+If the working directory is different from the script's use the -c option to specify the path.
+Use -d to daemonize.
