@@ -1,6 +1,8 @@
 import sys
+import os
 import traceback
 import logging
+import getopt
 import irclib
 import modules
 
@@ -24,9 +26,12 @@ class PlaneshiftBot:
 
     def __load_config(self, path):
         global config
-        if path not in sys.path:
-            sys.path.insert(0, path)
-        config = __import__("config")
+        try:
+            os.chdir(path)
+            config = __import__("config")
+        except (ImportError, OSError):
+            self.log.error("No config.py file found at %s", path)
+            sys.exit(1)
 
     def __load_modules(self, mod_list):
         for name in mod_list:
@@ -94,7 +99,20 @@ class PlaneshiftBot:
         self.irc.process_forever()
 
 def main(args):
-    bot = PlaneshiftBot()
+    path = "./"
+    (optlist, otherargs) = getopt.getopt(args[1:], "c:dh", 
+                                         ['help'])
+    for (option, arg) in optlist:
+        if option == "-c":
+            path = arg
+        if option == "-d":
+            raise NotImplementedError # TODO daemonize
+        if option == "-h" or option == "--help":
+            print ("options:\n" +
+                   "  -c <path> : change config/working directory\n"+
+                   "  -d        : daemonize")
+            sys.exit(0)
+    bot = PlaneshiftBot(path)
     bot.start()
 
 if __name__ == "__main__":
