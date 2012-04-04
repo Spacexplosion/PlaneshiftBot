@@ -26,11 +26,20 @@ class PlaneshiftBot:
 
     def __load_config(self, path):
         global config
+        path = os.path.expanduser(path)
+        path = os.path.normpath(path)
+        self.log.debug("Loading config from %s", path)
         try:
+            if path not in sys.path:
+                sys.path.insert(0, path)
             os.chdir(path)
             config = __import__("config")
         except (ImportError, OSError):
-            self.log.error("No config.py file found at %s", path)
+            self.log.error("No config.py file found at %s \nQuitting...", path)
+            sys.exit(1)
+        if not (hasattr(config, "SERVER_LIST") and
+                hasattr(config, "MODULES")):
+            self.log.error("Necessary entries missing from config.py. Quitting...")
             sys.exit(1)
 
     def __load_modules(self, mod_list):
