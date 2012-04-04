@@ -30,9 +30,12 @@ class PlaneshiftBot:
 
     def __load_modules(self, mod_list):
         for name in mod_list:
-            __import__("modules." + name)
-            mod = getattr(modules, name)
-            self.add_module(name, mod.IRCModule())
+            try:
+                __import__("modules." + name)
+                mod = getattr(modules, name)
+                self.add_module(name, mod.IRCModule())
+            except ImportError:
+                self.log.warn("Couldn't import module %s", name)
 
     def _local_dispatcher(self, connection, event):
         handler = "on_" + event.eventtype()
@@ -86,6 +89,7 @@ class PlaneshiftBot:
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
 
     def start(self):
+        """Run the bot. Blocks forever."""
         self.connect(config.SERVER_LIST)
         self.irc.process_forever()
 
