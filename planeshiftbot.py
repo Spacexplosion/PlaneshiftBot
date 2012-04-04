@@ -1,7 +1,9 @@
+from __future__ import with_statement
 import sys
 import os
 import traceback
 import logging
+import threading
 import getopt
 import irclib
 import modules
@@ -10,9 +12,11 @@ class PlaneshiftBot:
 
     def __init__(self, config_path="./"):
         self.modules = {}
-        self.connections = []
+        self.connections = {}
         self.dccs = []
-        self.irc = irclib.IRC()
+        self.irc = irclib.IRC(fn_to_add_timeout=self._add_timer)
+        self._timers = set()
+        self._timers_lock = threading.Lock()
 
         # initialize logging
         logging.basicConfig(format="%(levelname)s:%(message)s",
@@ -49,12 +53,26 @@ class PlaneshiftBot:
                 mod = getattr(modules, name)
                 self.add_module(name, mod.IRCModule())
             except ImportError:
-                self.log.warn("Couldn't import module %s", name)
+                self.log.error("Couldn't import module %s", name)
 
     def _local_dispatcher(self, connection, event):
         handler = "on_" + event.eventtype()
         if hasattr(self, handler):
             getattr(self, handler)(connection, event)
+
+    def _add_timer(self, secs):
+        t = threading.Timer(secs, self._timer_callback)
+        with self._timers_lock:
+            self._timers.add(t)
+            t.start()
+
+    def _timer_callback(self):
+        self.irc.process_timeout()
+        if self._timers_lock.acquire(False):
+            for t in list(self._timers):
+                if not t.isAlive():
+                    self._timers.remove(t)
+            self._timers_lock.release()
 
     def add_module(self, name, ircmod):
         """Register event handlers for a new module.
@@ -82,9 +100,6 @@ class PlaneshiftBot:
                 self.irc.remove_global_handler(evname, getattr(ircmod, handler))
         del self.modules[name]
 
-    def on_welcome(self, connection, event):
-        connection.join("#planeshiftbot-testing")
-
     def connect(self, server_list):
         """Connect to a list of servers.
 
@@ -93,19 +108,63 @@ class PlaneshiftBot:
         """
         for serverargs in server_list:
             connection = self.irc.server()
+            self.connections[serverargs['server']] = connection
+            # As of irclib 0.4.8, ipv6 is the only parameter not stored 
+            #  inside the ServerConnection. If that changes, this if block 
+            #  can go.
+            if "ipv6" in serverargs:
+                connection.ipv6 = serverargs['ipv6']
+            else:
+                connection.ipv6 = False
             try:
                 connection.connect(**serverargs)
-                self.connections.append(connection)
             except irclib.ServerConnectionError:
-                self.log.warn("Cannot connect to %s", serverargs['server'])
+                e = irclib.Event("disconnect", "", "", ["Failed to connect"])
+                self.on_disconnect(connection, e)
             except Exception:
                 self.log.error("Configuration failure on %s", serverargs['server'])
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
+
+    def reconnect(self, connection=None, server=""):
+        """Reconnect to a server.
+
+        connection - irclib.ServerConnection that has previously connected
+        server - hostname to look up; ignored if connection is given
+        """
+        if connection is None and server not in self.connections:
+            self.log.error("Tried to reconnect to new server: %s", server)
+            return
+        elif connection is None:
+            connection = self.connections[server]
+        c = connection
+        try:
+            connection.connect(c.server, c.port, c.nickname, c.password, 
+                               c.username, c.ircname, c.localaddress, 
+                               c.localport, (c.ssl is not None), c.ipv6)
+        except irclib.ServerConnectionError:
+            e = irclib.Event("disconnect", "", "", ["Failed to reconnect"])
+            self.on_disconnect(connection, e)
+
+    def on_disconnect(self, connection, event):
+        """Handle disconnect events by scheduling reconnect."""
+        self.log.warn("Disconnected from %s: %s", 
+                      connection.server, event.arguments()[0])
+        if hasattr(config, "RECONNECT_WAIT"):
+            delay = config.RECONNECT_WAIT
+        else:
+            delay = 60
+        if delay >= 0:
+            self.irc.execute_delayed(delay, self.reconnect, (connection,))
+
+    # DEBUG
+    def on_welcome(self, connection, event):
+        connection.join("#planeshiftbot-testing")
 
     def start(self):
         """Run the bot. Blocks forever."""
         self.connect(config.SERVER_LIST)
         self.irc.process_forever()
+
 
 def main(args):
     path = "./"
