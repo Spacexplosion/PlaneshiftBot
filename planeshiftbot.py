@@ -8,6 +8,10 @@ import getopt
 import irclib
 import modules
 
+logging.basicConfig(format="%(levelname)s: %(message)s",
+                    level=logging.INFO,
+                    stream=sys.stdout)
+
 class PlaneshiftBot:
 
     def __init__(self, config_path="./"):
@@ -17,37 +21,45 @@ class PlaneshiftBot:
         self.irc = irclib.IRC(fn_to_add_timeout=self._add_timer)
         self._timers = set()
         self._timers_lock = threading.Lock()
+        self.log = logging.getLogger("ircbot")
 
-        # initialize logging
-        logging.basicConfig(format="%(levelname)s:%(message)s",
-                            level=logging.DEBUG,
-                            stream=sys.stdout)
-        self.log = logging.getLogger(type(self).__name__)
+        self.__load_config(config_path)
+
+        if not os.path.isdir("logs"):
+            os.mkdir("logs")
+        logformat = logging.Formatter("%(asctime)s %(levelname)s: %(message)s",
+                                      "%Y-%m-%d %H:%M:%S")
+        loghandler = logging.FileHandler("logs/bot.log")
+        loghandler.setFormatter(logformat)
+        if hasattr(config, "LOGLEVEL"):
+            self.log.setLevel(getattr(logging, config.LOGLEVEL))
+            logging.root.handlers[0].setLevel(logging.ERROR)
+        self.log.addHandler(loghandler)
 
         self.irc.add_global_handler("all_events", self._local_dispatcher)
-        self.__load_config(config_path)
         self.__load_modules(config.MODULES)
 
     def __load_config(self, path):
         global config
         path = os.path.expanduser(path)
         path = os.path.normpath(path)
-        self.log.debug("Loading config from %s", path)
+        self.log.info("Loading config from %s", path)
         try:
             if path not in sys.path:
                 sys.path.insert(0, path)
             os.chdir(path)
             config = __import__("config")
         except (ImportError, OSError):
-            self.log.error("No config.py file found at %s \nQuitting...", path)
+            self.log.critical("No config.py file found at %s \nQuitting...", path)
             sys.exit(1)
         if not (hasattr(config, "SERVER_LIST") and
                 hasattr(config, "MODULES")):
-            self.log.error("Necessary entries missing from config.py. Quitting...")
+            self.log.critical("Necessary entries missing from config.py. Quitting...")
             sys.exit(1)
 
     def __load_modules(self, mod_list):
         for name in mod_list:
+            self.log.info("Loading module %s", name)
             try:
                 __import__("modules." + name)
                 mod = getattr(modules, name)
@@ -61,12 +73,14 @@ class PlaneshiftBot:
             getattr(self, handler)(connection, event)
 
     def _add_timer(self, secs):
+        self.log.debug("Scheduling timeout for %d seconds", secs)
         t = threading.Timer(secs, self._timer_callback)
         with self._timers_lock:
             self._timers.add(t)
             t.start()
 
     def _timer_callback(self):
+        self.log.debug("Timeout triggered")
         self.irc.process_timeout()
         if self._timers_lock.acquire(False):
             for t in list(self._timers):
@@ -108,15 +122,16 @@ class PlaneshiftBot:
         """
         for serverargs in server_list:
             connection = self.irc.server()
-            self.connections[serverargs['server']] = connection
-            # As of irclib 0.4.8, ipv6 is the only parameter not stored 
-            #  inside the ServerConnection. If that changes, this if block 
-            #  can go.
-            if "ipv6" in serverargs:
-                connection.ipv6 = serverargs['ipv6']
-            else:
-                connection.ipv6 = False
             try:
+                self.log.info("Connecting to %s", serverargs['server'])
+                self.connections[serverargs['server']] = connection
+                # As of irclib 0.4.8, ipv6 is the only parameter not stored 
+                #  inside the ServerConnection. If that changes, this if block 
+                #  can go.
+                if "ipv6" in serverargs:
+                    connection.ipv6 = serverargs['ipv6']
+                else:
+                    connection.ipv6 = False
                 connection.connect(**serverargs)
             except irclib.ServerConnectionError:
                 e = irclib.Event("disconnect", "", "", ["Failed to connect"])
@@ -136,6 +151,7 @@ class PlaneshiftBot:
             return
         elif connection is None:
             connection = self.connections[server]
+        self.log.info("Reconnecting to %s", connection.server)
         c = connection
         try:
             connection.connect(c.server, c.port, c.nickname, c.password, 

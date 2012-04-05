@@ -13,5 +13,8 @@ SERVER_LIST = [
 MODULES = [ "rawlog"
           ]
 
-## seconds to wait to reconnect
+## Set the number of seconds to wait to reconnect
 #RECONNECT_WAIT = 60 # (default 60, negative turns off)
+
+## Set the amount of log output
+LOGLEVEL = "INFO" # DEBUG, INFO, WARNING, ERROR
