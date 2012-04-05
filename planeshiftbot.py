@@ -96,8 +96,13 @@ class PlaneshiftBot:
         """
         for evname in irclib.all_events + ['all_events']:
             handler = "on_" + evname
+            priority = 0
+            if hasattr(ircmod, handler + "_priority"):
+                priority = getattr(ircmod, handler + "_priority")
             if hasattr(ircmod, handler):
-                self.irc.add_global_handler(evname, getattr(ircmod, handler))
+                self.irc.add_global_handler(evname, 
+                                            getattr(ircmod, handler),
+                                            priority)
         self.modules[name] = ircmod
 
     def del_module(self, name):
@@ -171,10 +176,6 @@ class PlaneshiftBot:
             delay = 60
         if delay >= 0:
             self.irc.execute_delayed(delay, self.reconnect, (connection,))
-
-    # DEBUG
-    def on_welcome(self, connection, event):
-        connection.join("#planeshiftbot-testing")
 
     def start(self):
         """Run the bot. Blocks forever."""
