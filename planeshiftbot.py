@@ -94,7 +94,9 @@ class PlaneshiftBot:
         name - string name for the module
         ircmod - an object containing irclib event handler methods
         """
-        for evname in irclib.all_events + ['all_events']:
+        # As of irclib 0.5.0, nick events are not listed with the others.
+        # If this changes, the explicit mention here must be removed.
+        for evname in irclib.all_events + ['all_events', 'nick']:
             handler = "on_" + evname
             priority = 0
             if hasattr(ircmod, handler + "_priority"):
@@ -113,7 +115,9 @@ class PlaneshiftBot:
         if name not in self.modules:
             return
         ircmod = self.modules[name]
-        for evname in all_events + ['all_events']:
+        # As of irclib 0.5.0, nick events are not listed with the others.
+        # If this changes, the explicit mention here must be removed.
+        for evname in all_events + ['all_events', 'nick']:
             handler = "on_" + evname
             if hasattr(ircmod, handler):
                 self.irc.remove_global_handler(evname, getattr(ircmod, handler))
@@ -130,7 +134,7 @@ class PlaneshiftBot:
             try:
                 self.log.info("Connecting to %s", serverargs['server'])
                 self.connections[serverargs['server']] = connection
-                # As of irclib 0.4.8, ipv6 is the only parameter not stored 
+                # As of irclib 0.5.0, ipv6 is the only parameter not stored 
                 #  inside the ServerConnection. If that changes, this if block 
                 #  can go.
                 if "ipv6" in serverargs:
