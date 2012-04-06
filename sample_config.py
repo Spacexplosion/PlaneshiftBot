@@ -30,3 +30,10 @@ AUTOJOIN_CHANNELS = [
     "#planeshiftbot-testing",
 # example: ("#quakelive", ["irc.quakenet.org"]),
 ]
+
+## Format file name for logs (use standard Python formatting)
+CHAN_LOG_FILENAME = "%(name)s@%(server)s.log" # keywords - name, server
+## Format log timestamps
+CHAN_LOG_TIME_FORMAT = "%H:%M:%S" # use standard Python date format
+## Format messages in channels
+#CHAN_LOG_MSG_FORMAT = "<%(nick)s> %(message)s" # keywords - nick, nickmask, server

@@ -1,6 +1,6 @@
 Requirements:
 python (2.5+ required, 3.0+ not tested)
-python-irclib (0.4.8+ required)
+python-irclib (0.5.0+ required)
 
 Install:
 Copy sample_config.py to what will be the bot's working directory and rename to config.py . Edit config.py to customize your bot.
