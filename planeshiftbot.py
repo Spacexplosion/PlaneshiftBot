@@ -33,6 +33,7 @@ class PlaneshiftBot:
         loghandler.setFormatter(logformat)
         if hasattr(config, "LOGLEVEL"):
             self.log.setLevel(getattr(logging, config.LOGLEVEL))
+            loghandler.setLevel(self.log.level)
             logging.root.handlers[0].setLevel(logging.ERROR)
         self.log.addHandler(loghandler)
 
@@ -94,9 +95,7 @@ class PlaneshiftBot:
         name - string name for the module
         ircmod - an object containing irclib event handler methods
         """
-        # As of irclib 0.5.0, nick events are not listed with the others.
-        # If this changes, the explicit mention here must be removed.
-        for evname in irclib.all_events + ['all_events', 'nick']:
+        for evname in irclib.all_events + ['all_events'] + unlisted_events:
             handler = "on_" + evname
             priority = 0
             if hasattr(ircmod, handler + "_priority"):
@@ -115,9 +114,7 @@ class PlaneshiftBot:
         if name not in self.modules:
             return
         ircmod = self.modules[name]
-        # As of irclib 0.5.0, nick events are not listed with the others.
-        # If this changes, the explicit mention here must be removed.
-        for evname in all_events + ['all_events', 'nick']:
+        for evname in irclib.all_events + ['all_events'] + unlisted_events:
             handler = "on_" + evname
             if hasattr(ircmod, handler):
                 self.irc.remove_global_handler(evname, getattr(ircmod, handler))
@@ -186,6 +183,10 @@ class PlaneshiftBot:
         self.connect(config.SERVER_LIST)
         self.irc.process_forever()
 
+
+# As of irclib 0.5.0, these events are not listed with the others.
+# If this changes, the explicit mention here must be removed.
+unlisted_events = ['nick', 'topic']
 
 def main(args):
     path = "./"
