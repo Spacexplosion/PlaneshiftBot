@@ -31,6 +31,9 @@ AUTOJOIN_CHANNELS = [
 # example: ("#quakelive", ["irc.quakenet.org"]),
 ]
 
+## Set the number of seconds to wait to rejoin after kicked
+#KICK_REJOIN_WAIT -1 # (default off)
+
 ## Format file name for logs (use standard Python formatting)
 CHAN_LOG_FILENAME = "%(name)s@%(server)s.log" # keywords - name, server
 ## Format log timestamps
