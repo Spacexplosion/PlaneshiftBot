@@ -34,6 +34,9 @@ AUTOJOIN_CHANNELS = [
 ## Set the number of seconds to wait to rejoin after kicked
 #KICK_REJOIN_WAIT -1 # (default off)
 
+## Join any channel the bot gets invited to?
+# JOIN_INVITES = False
+
 ## Format file name for logs (use standard Python formatting)
 CHAN_LOG_FILENAME = "%(name)s@%(server)s.log" # keywords - name, server
 ## Format log timestamps

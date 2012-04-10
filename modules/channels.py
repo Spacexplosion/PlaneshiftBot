@@ -91,6 +91,11 @@ class IRCModule:
                                                 connection.join,
                                                 (channel.name,))
 
+    def on_invite(self, connection, event):
+        if not (hasattr(config, "JOIN_INVITES") and config.JOIN_INVITES):
+            return
+        connection.join(event.arguments()[0])
+
 
 class Channel(object):
 
