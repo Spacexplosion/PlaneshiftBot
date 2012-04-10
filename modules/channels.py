@@ -127,6 +127,9 @@ class Channel(object):
         self.log.addHandler(self._loghandler)
         self.log.setLevel(logging.INFO)
 
+    def __del__(self):
+        self.log.removeHandler(self._loghandler)
+
     def log_pubmsg(self, *args, **kwargs):
         self._loghandler.setFormatter(self._pubmsgFormatter)
         self.log.info(*args, **kwargs)
