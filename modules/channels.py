@@ -30,12 +30,14 @@ class IRCModule:
             self.log.debug("join handled: %s != %s",
                            irclib.nm_to_n(event.source()),
                            connection.get_nickname())
-            channel = self.serverchans[connection.server][event.target()]
+            channel = self.serverchans[connection.server.lower()]\
+                                      [irclib.irc_lower(event.target())]
         channel.log.info("** %s joined %s", event.source(), event.target())
         channel.add_user(irclib.nm_to_n(event.source()))
 
     def on_pubmsg(self, connection, event):
-        channel = self.serverchans[connection.server][event.target()]
+        channel = self.serverchans[connection.server.lower()]\
+                                  [irclib.irc_lower(event.target())]
         logargs = {"nick" : irclib.nm_to_n(event.source()),
                    "nickmask" : event.source(),
                    "server" : connection.server}
@@ -43,65 +45,73 @@ class IRCModule:
 
     def on_nick(self, connection, event):
         previous = irclib.nm_to_n(event.source())
-        for channel in self.serverchans[connection.server].values():
-            if previous in channel.users:
+        for channel in self.serverchans[connection.server.lower()].values():
+            if irclib.irc_lower(previous) in channel.users:
                 channel.change_nick(previous, event.target())
                 channel.log.info("** %s is now known as %s", 
                                  previous,
                                  event.target())
 
     def on_mode(self, connection, event):
-        if event.target() in self.serverchans[connection.server]:
+        servkey = connection.server.lower()
+        chankey = irclib.irc_lower(event.target())
+        if chankey in self.serverchans[servkey]:
             # channel mode versus user mode
-            channel = self.serverchans[connection.server][event.target()]
+            channel = self.serverchans[servkey][chankey]
             channel.log.info("%s mode change '%s' by %s",
                              event.target(),
                              " ".join(event.arguments()),
                              irclib.nm_to_n(event.source()))
 
     def on_topic(self, connection, event):
-        channel = self.serverchans[connection.server][event.target()]
+        channel = self.serverchans[connection.server.lower()]\
+                                  [irclib.irc_lower(event.target())]
         channel.log.info("%s topic changed by %s to: %s",
                          event.target(),
                          irclib.nm_to_n(event.source()),
                          event.arguments()[0])
 
     def on_currenttopic(self, connection, event):
-        channel = self.serverchans[connection.server][event.arguments()[0]]
+        channel = self.serverchans[connection.server.lower()]\
+                                  [irclib.irc_lower(event.arguments()[0])]
         channel.log.info("%s topic is: %s", *event.arguments())
 
     def on_part(self, connection, event):
         parter = irclib.nm_to_n(event.source())
-        channel = self.serverchans[connection.server][event.target()]
+        servkey = connection.server.lower()
+        chankey = irclib.irc_lower(event.target())
+        channel = self.serverchans[servkey][chankey]
         channel.log.info("** %s leaves %s", parter, event.target())
         channel.del_user(parter)
         if parter == connection.get_nickname():
             self.log.debug("Leaving %s", channel.name)
-            del self.serverchans[connection.server][event.target()]
+            del self.serverchans[servkey][chankey]
 
     def on_kick(self, connection, event):
-       channel = self.serverchans[connection.server][event.target()]
-       kickee = event.arguments()[0]
-       reason = event.arguments()[1]
-       channel.log.info("** %s kicks %s: %s",
-                        irclib.nm_to_n(event.source()),
-                        kickee,
-                        reason)
-       channel.del_user(kickee)
-       if kickee == connection.get_nickname():
-           self.log.debug("Leaving %s", channel.name)
-           del self.serverchans[connection.server][event.target()]
-       if hasattr(config, "KICK_REJOIN_WAIT") and config.KICK_REJOIN_WAIT > 0:
-           connection.irclibobj.execute_delayed(config.KICK_REJOIN_WAIT,
-                                                connection.join,
-                                                (channel.name,))
+        servkey = connection.server.lower()
+        chankey = irclib.irc_lower(event.target())
+        channel = self.serverchans[servkey][chankey]
+        kickee = event.arguments()[0]
+        reason = event.arguments()[1]
+        channel.log.info("** %s kicks %s: %s",
+                         irclib.nm_to_n(event.source()),
+                         kickee,
+                         reason)
+        channel.del_user(kickee)
+        if kickee == connection.get_nickname():
+            self.log.debug("Leaving %s", channel.name)
+            del self.serverchans[servkey][chankey]
+            if hasattr(config, "KICK_REJOIN_WAIT") \
+                    and config.KICK_REJOIN_WAIT > 0:
+                connection.irclibobj.execute_delayed(config.KICK_REJOIN_WAIT,
+                                                     connection.join,
+                                                     (channel.name,))
 
     def on_quit(self, connection, event):
         quitter = irclib.nm_to_n(event.source())
         self.log.debug("quit handled for %s", quitter)
-        for channel in self.serverchans[connection.server].values():
-            self.log.debug(str(channel.users))
-            if quitter in channel.users:
+        for channel in self.serverchans[connection.server.lower()].values():
+            if irclib.irc_lower(quitter) in channel.users:
                 channel.del_user(quitter)
                 channel.log.info("** %s has quit. (%s)", 
                                  quitter, 
@@ -167,7 +177,7 @@ class Channel(object):
 
     def del_user(self, name):
         """Remove name from user list"""
-        del self.users[name]
+        del self.users[irclib.IRCFoldedCase(name)]
 
     def change_nick(self, before, after):
         """Switch out nick in the user list"""
