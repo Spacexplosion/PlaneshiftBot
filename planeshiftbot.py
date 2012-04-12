@@ -42,13 +42,10 @@ class PlaneshiftBot:
 
     def __load_config(self, path):
         global config
-        path = os.path.expanduser(path)
-        path = os.path.normpath(path)
         self.log.info("Loading config from %s", path)
         try:
             if path not in sys.path:
                 sys.path.insert(0, path)
-            os.chdir(path)
             config = __import__("config")
         except (ImportError, OSError):
             self.log.critical("No config.py file found at %s \nQuitting...", path)
@@ -191,18 +188,41 @@ unlisted_events = ['nick', 'topic']
 
 def main(args):
     path = "./"
+    daemon = False
     (optlist, otherargs) = getopt.getopt(args[1:], "c:dh", 
                                          ['help'])
     for (option, arg) in optlist:
         if option == "-c":
             path = arg
         if option == "-d":
-            raise NotImplementedError # TODO daemonize
+            daemon = True
         if option == "-h" or option == "--help":
             print ("options:\n" +
                    "  -c <path> : change config/working directory\n"+
                    "  -d        : daemonize")
             sys.exit(0)
+    path = os.path.expanduser(path)
+    path = os.path.normpath(path)
+    os.chdir(path)
+
+    if daemon:
+        try:
+            pid = os.fork()
+            if pid == 0: #child
+                os.setsid()
+            else: #parent
+                sys.exit(0)
+            pid = os.fork()
+            if pid > 0: #child
+                print ("Starting daemon pid %d" % pid)
+                pidfile = open("bot.pid", "w")
+                pidfile.write(str(pid))
+                pidfile.close()
+                os._exit(0)
+            # else grandchild
+        except Exception:
+            print ("Failed to daemonize.")
+
     bot = PlaneshiftBot(path)
     bot.start()
 
