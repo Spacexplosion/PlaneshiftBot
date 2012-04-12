@@ -64,7 +64,8 @@ class PlaneshiftBot:
             try:
                 __import__("modules." + name)
                 mod = getattr(modules, name)
-                self.add_module(name, mod.IRCModule())
+                if hasattr(mod, "IRCModule"):
+                    self.add_module(name, mod.IRCModule())
             except ImportError:
                 self.log.error("Couldn't import module %s", name)
 
