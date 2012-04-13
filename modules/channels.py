@@ -19,6 +19,11 @@ class IRCModule:
                     if len(chan) == 1 or connection.server in chan[1]:
                         connection.join(chan[0])
 
+    def on_invite(self, connection, event):
+        if not (hasattr(config, "JOIN_INVITES") and config.JOIN_INVITES):
+            return
+        connection.join(event.arguments()[0])
+
     def on_join(self, connection, event):
         if irclib.nm_to_n(event.source()) == connection.get_nickname():
             self.log.debug("join handled: new channel %s", event.target())
@@ -117,10 +122,13 @@ class IRCModule:
                                  quitter, 
                                  event.arguments()[0])
 
-    def on_invite(self, connection, event):
-        if not (hasattr(config, "JOIN_INVITES") and config.JOIN_INVITES):
-            return
-        connection.join(event.arguments()[0])
+    def on_disconnect(self, connection, event):
+        servkey = connection.server.lower()
+        for channel in self.serverchans[servkey].values():
+            channel.log.info("** Disconnected from %s: %s",
+                             connection.server, 
+                             event.arguments()[0])
+        del self.serverchans[servkey]
 
 
 class Channel(object):

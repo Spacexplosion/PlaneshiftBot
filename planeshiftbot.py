@@ -219,12 +219,13 @@ class PlaneshiftBot:
             return # not started
         elif self._halting.isSet():
             return # already stopped
-        self._halting.set()
-        for t in self._timers:
-            t.cancel()
         for c in self.connections.values():
             if hasattr(c, "pingtimer"):
                 c.pingtimer.cancel()
+            c.disconnect("Halting")
+        for t in self._timers:
+            t.cancel()
+        self._halting.set()
 
 
 # As of irclib 0.5.0, these events are not listed with the others.
