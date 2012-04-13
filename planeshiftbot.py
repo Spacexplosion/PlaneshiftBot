@@ -55,6 +55,14 @@ class PlaneshiftBot:
             self.log.critical("Necessary entries missing from config.py. Quitting...")
             sys.exit(1)
 
+        # set defaults
+        if not hasattr(config, "KEEP_ALIVE_FREQ"):
+            config.KEEP_ALIVE_FREQ = 30
+        if not (hasattr(config, "PING_TIMEOUT") and config.PING_TIMEOUT > 0):
+            config.PING_TIMEOUT = 10
+        if not hasattr(config, "RECONNECT_WAIT"):
+            config.RECONNECT_WAIT = 60
+
     def __load_modules(self, mod_list):
         for name in mod_list:
             self.log.info("Loading module %s", name)
@@ -72,20 +80,38 @@ class PlaneshiftBot:
             getattr(self, handler)(connection, event)
 
     def _add_timer(self, secs):
-        self.log.debug("Scheduling timeout for %d seconds", secs)
+        #self.log.debug("Scheduling timeout for %d seconds", secs)
         t = threading.Timer(secs, self._timer_callback)
         with self._timers_lock:
             self._timers.add(t)
             t.start()
 
     def _timer_callback(self):
-        self.log.debug("Timeout triggered")
+        #self.log.debug("Timeout triggered")
         self.irc.process_timeout()
         if self._timers_lock.acquire(False):
             for t in list(self._timers):
                 if not t.isAlive():
                     self._timers.remove(t)
             self._timers_lock.release()
+
+    def _start_keep_alive(self, connection):
+        if config.KEEP_ALIVE_FREQ > 0:
+            self.irc.execute_delayed(config.KEEP_ALIVE_FREQ,
+                                     self._keep_alive, (connection,))
+
+    def _keep_alive(self, connection):
+        if not connection.is_connected():
+            return # timed out already
+        if hasattr(connection, "pingtimer") and connection.pingtimer.isAlive():
+            return # if PING_TIMEOUT > KEEP_ALIVE_FREQ
+        connection.pingtimer = threading.Timer(config.PING_TIMEOUT,
+                                               connection.disconnect,
+                                               ("Ping Timeout",))
+        self.irc.execute_delayed(config.KEEP_ALIVE_FREQ, 
+                                 self._keep_alive, (connection,))
+        connection.pingtimer.start()
+        connection.ping(connection.server)
 
     def add_module(self, name, ircmod):
         """Register event handlers for a new module.
@@ -137,6 +163,7 @@ class PlaneshiftBot:
                 else:
                     connection.ipv6 = False
                 connection.connect(**serverargs)
+                self._start_keep_alive(connection)
             except irclib.ServerConnectionError:
                 e = irclib.Event("disconnect", "", "", ["Failed to connect"])
                 self.on_disconnect(connection, e)
@@ -161,6 +188,7 @@ class PlaneshiftBot:
             connection.connect(c.server, c.port, c.nickname, c.password, 
                                c.username, c.ircname, c.localaddress, 
                                c.localport, (c.ssl is not None), c.ipv6)
+            self._start_keep_alive(connection)
         except irclib.ServerConnectionError:
             e = irclib.Event("disconnect", "", "", ["Failed to reconnect"])
             self.on_disconnect(connection, e)
@@ -169,17 +197,34 @@ class PlaneshiftBot:
         """Handle disconnect events by scheduling reconnect."""
         self.log.warn("Disconnected from %s: %s", 
                       connection.server, event.arguments()[0])
-        if hasattr(config, "RECONNECT_WAIT"):
-            delay = config.RECONNECT_WAIT
-        else:
-            delay = 60
-        if delay >= 0:
-            self.irc.execute_delayed(delay, self.reconnect, (connection,))
+        if config.RECONNECT_WAIT >= 0:
+            self.irc.execute_delayed(config.RECONNECT_WAIT, 
+                                     self.reconnect, (connection,))
+
+    def on_pong(self, connection, event):
+        """Handle answers to ping for keep-alives."""
+        if hasattr(connection, "pingtimer"):
+            connection.pingtimer.cancel()
 
     def start(self):
         """Run the bot. Blocks forever."""
         self.connect(config.SERVER_LIST)
-        self.irc.process_forever()
+        self._halting = threading.Event()
+        while not self._halting.isSet():
+            self.irc.process_once(0.1)
+
+    def stop(self):
+        """Halt execution of start() and clean up threads"""
+        if not hasattr(self, "_halting"):
+            return # not started
+        elif self._halting.isSet():
+            return # already stopped
+        self._halting.set()
+        for t in self._timers:
+            t.cancel()
+        for c in self.connections.values():
+            if hasattr(c, "pingtimer"):
+                c.pingtimer.cancel()
 
 
 # As of irclib 0.5.0, these events are not listed with the others.
@@ -224,7 +269,10 @@ def main(args):
             print ("Failed to daemonize.")
 
     bot = PlaneshiftBot(path)
-    bot.start()
+    try:
+        bot.start()
+    finally:
+        bot.stop()
 
 if __name__ == "__main__":
     main(sys.argv)

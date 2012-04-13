@@ -15,6 +15,12 @@ MODULES = [
     "channels",
 ]
 
+## Set the frequency in seconds of pinging the server
+#KEEP_ALIVE_FREQ = 30 # (default 30, <=0 turns off)
+
+## Set the number of seconds to wait for ping response
+#PING_TIMEOUT = 10
+
 ## Set the number of seconds to wait to reconnect
 #RECONNECT_WAIT = 60 # (default 60, negative turns off)
 
