@@ -279,9 +279,9 @@ def main(args):
     path = os.path.expanduser(path)
     path = os.path.normpath(path)
     os.chdir(path)
+    signal.signal(signal.SIGTERM, signalhandler)
 
     bot = PlaneshiftBot(path)
-    signal.signal(signal.SIGTERM, signalhandler)
     try:
         bot.start(daemon)
     except (KeyboardInterrupt, SystemExit):
