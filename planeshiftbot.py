@@ -1,6 +1,7 @@
 from __future__ import with_statement
 import sys
 import os
+import signal
 import traceback
 import logging
 import threading
@@ -22,6 +23,7 @@ class PlaneshiftBot:
         self._timers = set()
         self._timers_lock = threading.Lock()
         self.log = logging.getLogger("ircbot")
+        self.daemonized = False
 
         self.__load_config(config_path)
 
@@ -208,8 +210,30 @@ class PlaneshiftBot:
         if hasattr(connection, "pingtimer"):
             connection.pingtimer.cancel()
 
-    def start(self):
+    def daemonize(self):
+        """Fork and background process, exiting the parent"""
+        try:
+            pid = os.fork()
+            if pid == 0: #child
+                os.setsid()
+            else: #parent
+                os._exit(0)
+            pid = os.fork()
+            if pid > 0: #child
+                print ("Starting daemon pid %d" % pid)
+                pidfile = open("bot.pid", "w")
+                pidfile.write(str(pid))
+                pidfile.close()
+                os._exit(0)
+            # else grandchild
+        except Exception:
+            print ("Failed to daemonize.")
+        self.daemonized = True
+
+    def start(self, daemon=False):
         """Run the bot. Blocks forever."""
+        if daemon:
+            self.daemonize()
         self.connect(config.SERVER_LIST)
         self._halting = threading.Event()
         while not self._halting.isSet():
@@ -237,6 +261,7 @@ class PlaneshiftBot:
 unlisted_events = ['nick', 'topic']
 
 def main(args):
+    global bot
     path = "./"
     daemon = False
     (optlist, otherargs) = getopt.getopt(args[1:], "c:dh", 
@@ -255,29 +280,28 @@ def main(args):
     path = os.path.normpath(path)
     os.chdir(path)
 
-    if daemon:
-        try:
-            pid = os.fork()
-            if pid == 0: #child
-                os.setsid()
-            else: #parent
-                sys.exit(0)
-            pid = os.fork()
-            if pid > 0: #child
-                print ("Starting daemon pid %d" % pid)
-                pidfile = open("bot.pid", "w")
-                pidfile.write(str(pid))
-                pidfile.close()
-                os._exit(0)
-            # else grandchild
-        except Exception:
-            print ("Failed to daemonize.")
-
     bot = PlaneshiftBot(path)
+    signal.signal(signal.SIGTERM, signalhandler)
     try:
-        bot.start()
+        bot.start(daemon)
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    except:
+        bot.log.error("".join(traceback.format_exception(*sys.exc_info())))
     finally:
-        bot.stop()
+        exit()
+
+def signalhandler(signum, frame):
+    sys.exit(0)
+
+def exit():
+    global bot
+    bot.stop()
+    bot.log.info("EXITING")
+    logging.shutdown()
+    if bot.daemonized:
+        os.remove("bot.pid")
+    sys.exit(0)
 
 if __name__ == "__main__":
     main(sys.argv)
