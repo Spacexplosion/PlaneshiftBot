@@ -18,7 +18,7 @@ class PlaneshiftBot:
         self.modules = {}
         self.connections = {}
         self.dccs = []
-        self.irc = irclib.IRC(fn_to_add_timeout=self._add_timer)
+        self.irc = irclib.IRC()
         self._timers = set()
         self._timers_lock = threading.Lock()
         self.log = logging.getLogger("ircbot")
@@ -79,37 +79,35 @@ class PlaneshiftBot:
         if hasattr(self, handler):
             getattr(self, handler)(connection, event)
 
-    def _add_timer(self, secs):
+    def _add_timer(self, secs, function, args=tuple()):
         #self.log.debug("Scheduling timeout for %d seconds", secs)
-        t = threading.Timer(secs, self._timer_callback)
+        t = threading.Timer(secs, self._timer_callback, (function, args))
         with self._timers_lock:
             self._timers.add(t)
             t.start()
 
-    def _timer_callback(self):
+    def _timer_callback(self, function, args):
         #self.log.debug("Timeout triggered")
-        self.irc.process_timeout()
+        function(*args)
         if self._timers_lock.acquire(False):
             for t in list(self._timers):
                 if not t.isAlive():
                     self._timers.remove(t)
             self._timers_lock.release()
 
-    def _start_keep_alive(self, connection):
-        if config.KEEP_ALIVE_FREQ > 0:
-            self.irc.execute_delayed(config.KEEP_ALIVE_FREQ,
-                                     self._keep_alive, (connection,))
-
     def _keep_alive(self, connection):
         if not connection.is_connected():
             return # timed out already
+        self._add_timer(config.KEEP_ALIVE_FREQ, 
+                        self._keep_alive, (connection,))
         if hasattr(connection, "pingtimer") and connection.pingtimer.isAlive():
+            self.log.debug("keep alive overlapped ping timer. %d > %d",
+                           config.PING_TIMEOUT, config.KEEP_ALIVE_FREQ)
             return # if PING_TIMEOUT > KEEP_ALIVE_FREQ
+        self.log.debug("keep alive for %s", connection.server)
         connection.pingtimer = threading.Timer(config.PING_TIMEOUT,
                                                connection.disconnect,
                                                ("Ping Timeout",))
-        self.irc.execute_delayed(config.KEEP_ALIVE_FREQ, 
-                                 self._keep_alive, (connection,))
         connection.pingtimer.start()
         connection.ping(connection.server)
 
@@ -163,7 +161,9 @@ class PlaneshiftBot:
                 else:
                     connection.ipv6 = False
                 connection.connect(**serverargs)
-                self._start_keep_alive(connection)
+                if config.KEEP_ALIVE_FREQ > 0:
+                    self._add_timer(config.KEEP_ALIVE_FREQ,
+                                    self._keep_alive, (connection,))
             except irclib.ServerConnectionError:
                 e = irclib.Event("disconnect", "", "", ["Failed to connect"])
                 self.on_disconnect(connection, e)
@@ -188,7 +188,9 @@ class PlaneshiftBot:
             connection.connect(c.server, c.port, c.nickname, c.password, 
                                c.username, c.ircname, c.localaddress, 
                                c.localport, (c.ssl is not None), c.ipv6)
-            self._start_keep_alive(connection)
+            if config.KEEP_ALIVE_FREQ > 0:
+                self._add_timer(config.KEEP_ALIVE_FREQ,
+                                self._keep_alive, (connection,))
         except irclib.ServerConnectionError:
             e = irclib.Event("disconnect", "", "", ["Failed to reconnect"])
             self.on_disconnect(connection, e)
@@ -198,8 +200,8 @@ class PlaneshiftBot:
         self.log.warn("Disconnected from %s: %s", 
                       connection.server, event.arguments()[0])
         if config.RECONNECT_WAIT >= 0:
-            self.irc.execute_delayed(config.RECONNECT_WAIT, 
-                                     self.reconnect, (connection,))
+            self._add_timer(config.RECONNECT_WAIT, 
+                            self.reconnect, (connection,))
 
     def on_pong(self, connection, event):
         """Handle answers to ping for keep-alives."""
@@ -211,7 +213,9 @@ class PlaneshiftBot:
         self.connect(config.SERVER_LIST)
         self._halting = threading.Event()
         while not self._halting.isSet():
-            self.irc.process_once(0.1)
+            self.irc.process_once(0.1) 
+            #self.irc.process_timeout() called by process_once
+
 
     def stop(self):
         """Halt execution of start() and clean up threads"""
