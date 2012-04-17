@@ -40,6 +40,20 @@ class IRCModule:
         channel.log.info("** %s joined %s", event.source(), event.target())
         channel.add_user(irclib.nm_to_n(event.source()))
 
+    def on_namreply(self, connection, event):
+        channel = self.serverchans[connection.server.lower()]\
+                                  [irclib.irc_lower(event.arguments()[1])]
+        if not channel.in_namreply:
+            channel.users = {}
+            channel.in_namreply = True
+        for nick in event.arguments()[2].split(' '):
+            channel.add_user(nick)
+
+    def on_endofnames(self, connection, event):
+        channel = self.serverchans[connection.server.lower()]\
+                                  [irclib.irc_lower(event.arguments()[0])]
+        channel.in_namreply = False
+
     def on_pubmsg(self, connection, event):
         channel = self.serverchans[connection.server.lower()]\
                                   [irclib.irc_lower(event.target())]
@@ -141,6 +155,7 @@ class Channel(object):
             lowername = self.name.lower()
         self.server = irclib.FoldedCase(server)
         self.users = {}
+        self.in_namreply = False
         self.log = logging.getLogger(lowername +"@"+ self.server.lower())
 
         logfilename = "logs/"
@@ -181,13 +196,21 @@ class Channel(object):
 
     def add_user(self, name):
         """Add name to user list"""
-        self.users[irclib.IRCFoldedCase(name)] = None
+        self.users[irclib.IRCFoldedCase(Channel.trim_nick(name))] = None
 
     def del_user(self, name):
         """Remove name from user list"""
-        del self.users[irclib.IRCFoldedCase(name)]
+        del self.users[irclib.IRCFoldedCase(Channel.trim_nick(name))]
 
     def change_nick(self, before, after):
         """Switch out nick in the user list"""
         self.del_user(before)
         self.add_user(after)
+
+    @classmethod
+    def trim_nick(clas, nick):
+        """Return the nick minus op/voice decorators"""
+        if nick.startswith(('@','+')):
+            return nick[1:]
+        else:
+            return nick
