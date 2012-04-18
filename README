@@ -1,6 +1,8 @@
 Requirements:
-python (2.5+ required, 3.0+ not tested)
+python (2.5+ required, 2.7 recommended*, 3.0+ not tested)
 python-irclib (0.5.0+ required)
+
+* 2.7 for this fix: http://bugs.python.org/issue8117
 
 Install:
 Copy sample_config.py to what will be the bot's working directory and rename to config.py . Edit config.py to customize your bot.
