@@ -17,6 +17,10 @@ class IRCModule(modules.CommandMod):
                 m = int(groups[2])
         except ValueError:
             return
+        if n > 100000: # arbitrary iteration limit
+            connection.privmsg(replyto, "%s is trying to break me. :(" % \
+                                   irclib.nm_to_n(commander))
+            return
         for i in range(n):
             sum += random.randint(1, s)
         sum += m
