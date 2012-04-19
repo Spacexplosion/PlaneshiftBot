@@ -7,6 +7,7 @@ import signal
 import traceback
 import logging
 import threading
+import Queue
 import getopt
 import irclib
 import modules
@@ -24,6 +25,7 @@ class PlaneshiftBot:
         self.irc = irclib.IRC()
         self._timers = set()
         self._timers_lock = threading.Lock()
+        self._modcom_q = Queue.Queue()
         self.log = logging.getLogger("ircbot")
         self.daemonized = False
 
@@ -115,6 +117,14 @@ class PlaneshiftBot:
         connection.pingtimer.start()
         connection.ping(connection.server)
 
+    def _process_modcom(self):
+        try:
+            (connection, event) = self._modcom_q.get(False)
+            if event.target() in modules:
+                modules[event.target()].dispatch(connection, event)
+        except Queue.Empty:
+            pass
+
     def add_module(self, name, ircmod):
         """Register event handlers for a new module.
 
@@ -130,6 +140,8 @@ class PlaneshiftBot:
                 self.irc.add_global_handler(evname, 
                                             getattr(ircmod, handler),
                                             priority)
+        if isinstance(ircmod, modules.ModCom):
+            ircmod.set_queue(self._modcom_q)
         self.modules[name] = ircmod
 
     def del_module(self, name):
@@ -239,9 +251,9 @@ class PlaneshiftBot:
         self.connect(config.SERVER_LIST)
         self._halting = threading.Event()
         while not self._halting.isSet():
-            self.irc.process_once(0.1) 
             #self.irc.process_timeout() called by process_once
-
+            self.irc.process_once(0.1)
+            self._process_modcom()
 
     def stop(self):
         """Halt execution of start() and clean up threads"""

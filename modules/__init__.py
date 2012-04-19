@@ -1,1 +1,1 @@
-from _base import CommandMod
+from _base import *
