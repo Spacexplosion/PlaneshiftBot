@@ -124,8 +124,8 @@ class PlaneshiftBot:
     def _process_modcom(self):
         try:
             (connection, event) = self._modcom_q.get(False)
-            if event.target() in modules:
-                modules[event.target()].dispatch(connection, event)
+            if event.target() in self.modules:
+                self.modules[event.target()].dispatch(connection, event)
         except Queue.Empty:
             pass
 
