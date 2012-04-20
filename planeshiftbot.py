@@ -40,7 +40,10 @@ class PlaneshiftBot:
         if hasattr(config, "LOGLEVEL"):
             self.log.setLevel(getattr(logging, config.LOGLEVEL))
             loghandler.setLevel(self.log.level)
-            logging.root.handlers[0].setLevel(logging.ERROR)
+            rhandler = logging.root.handlers[0]
+            rhandler.setLevel(self.log.level)
+            if self.daemonized:
+                logging.root.removeHandler(rhandler)
         self.log.addHandler(loghandler)
 
         self.irc.add_global_handler("all_events", self._local_dispatcher)
@@ -74,11 +77,12 @@ class PlaneshiftBot:
             self.log.info("Loading module %s", name)
             try:
                 __import__("modules." + name)
-                mod = getattr(modules, name)
-                if hasattr(mod, "IRCModule"):
-                    self.add_module(name, mod.IRCModule())
             except ImportError:
                 self.log.error("Couldn't import module %s", name)
+                return
+            mod = getattr(modules, name)
+            if hasattr(mod, "IRCModule"):
+                self.add_module(name, mod.IRCModule())
 
     def _local_dispatcher(self, connection, event):
         handler = "on_" + event.eventtype()
