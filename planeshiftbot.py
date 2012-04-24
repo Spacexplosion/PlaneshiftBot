@@ -40,10 +40,6 @@ class PlaneshiftBot:
         if hasattr(config, "LOGLEVEL"):
             self.log.setLevel(getattr(logging, config.LOGLEVEL))
             loghandler.setLevel(self.log.level)
-            rhandler = logging.root.handlers[0]
-            rhandler.setLevel(self.log.level)
-            if self.daemonized:
-                logging.root.removeHandler(rhandler)
         self.log.addHandler(loghandler)
 
         self.irc.add_global_handler("all_events", self._local_dispatcher)
@@ -53,6 +49,7 @@ class PlaneshiftBot:
         global config
         self.log.info("Loading config from %s", path)
         try:
+            os.chdir(path)
             if path not in sys.path:
                 sys.path.insert(0, path)
             config = __import__("config")
@@ -296,7 +293,8 @@ def main(args):
             sys.exit(0)
     path = os.path.expanduser(path)
     path = os.path.normpath(path)
-    os.chdir(path)
+    if daemon:
+        logging.root.removeHandler(logging.root.handlers[0])
     signal.signal(signal.SIGTERM, signalhandler)
 
     bot = PlaneshiftBot(path)
