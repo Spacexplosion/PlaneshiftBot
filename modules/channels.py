@@ -145,11 +145,12 @@ class IRCModule:
 
     def on_disconnect(self, connection, event):
         servkey = connection.server.lower()
-        for channel in self.serverchans[servkey].values():
-            channel.log.info("** Disconnected from %s: %s",
-                             connection.server, 
-                             event.arguments()[0])
-        del self.serverchans[servkey]
+        if servkey in self.serverchans:
+            for channel in self.serverchans[servkey].values():
+                channel.log.info("** Disconnected from %s: %s",
+                                 connection.server, 
+                                 event.arguments()[0])
+            del self.serverchans[servkey]
 
 
 class Channel(object):
