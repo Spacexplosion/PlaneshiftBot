@@ -276,7 +276,7 @@ class PlaneshiftBot:
 
 # As of irclib 0.5.0, these events are not listed with the others.
 # If this changes, the explicit mention here must be removed.
-unlisted_events = ['nick', 'topic']
+unlisted_events = ['nick', 'topic', 'action']
 
 def main(args):
     global bot

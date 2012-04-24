@@ -62,6 +62,13 @@ class IRCModule:
                    "server" : connection.server}
         channel.log_pubmsg(event.arguments()[0], extra=logargs)
 
+    def on_action(self, connection, event):
+        channel = self.serverchans[connection.server.lower()]\
+                                  [irclib.irc_lower(event.target())]
+        channel.log.info("%s %s",
+                         irclib.nm_to_n(event.source()),
+                         event.arguments()[0])
+
     def on_nick(self, connection, event):
         previous = irclib.nm_to_n(event.source())
         for channel in self.serverchans[connection.server.lower()].values():
@@ -181,6 +188,7 @@ class Channel(object):
         self._loghandler.setFormatter(self._eventmsgFormatter)
         self.log.addHandler(self._loghandler)
         self.log.setLevel(logging.INFO)
+        self.log.propagate = False
 
     def __del__(self):
         self.log.removeHandler(self._loghandler)
