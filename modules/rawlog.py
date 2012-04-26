@@ -1,8 +1,9 @@
 import logging
+import modules
 
 REAL_RAW = False
 
-class LogBot:
+class LogBot(modules.IRCModule):
 
     def __init__(self):
         self.log = logging.getLogger("ircbot.rawlog")

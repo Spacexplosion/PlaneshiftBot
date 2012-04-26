@@ -1,7 +1,14 @@
 import irclib
 import re
 
-class ModCom(object):
+class IRCModule(object):
+    """Base class for all Planeshiftbot modules."""
+
+    def on_load(self, bot):
+        self.bot = bot
+
+
+class ModCom(IRCModule):
     """A superclass for IRCModules that send events to each other."""
 
     def set_queue(self, queue):
@@ -28,7 +35,7 @@ class ModCom(object):
             getattr(self, handler)(connection, event)
 
 
-class CommandMod(object):
+class CommandMod(IRCModule):
     """A superclass for IRCModules that should respond to a command."""
 
     pattern = re.compile("^!(\S+)", re.UNICODE)

@@ -3,8 +3,9 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 import irclib
 import config
+import modules
 
-class IRCModule:
+class IRCModule(modules.IRCModule):
 
     def __init__(self):
         self.serverchans = {}

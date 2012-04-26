@@ -40,6 +40,7 @@ class IRCModule(modules.CommandMod, modules.ModCom):
     def on_command(self, connection, commander, replyto, groups):
         servkey = connection.server.lower()
         nickkey = irclib.irc_lower(groups[0])
+        user = None
         if nickkey in self.db[servkey]:
             user = self.db[servkey][nickkey]
         useron = False # TODO establish user offline

@@ -78,8 +78,11 @@ class PlaneshiftBot:
                 self.log.error("Couldn't import module %s", name)
                 return
             mod = getattr(modules, name)
-            if hasattr(mod, "IRCModule"):
+            if hasattr(mod, "IRCModule") and \
+                    issubclass(mod.IRCModule, modules.IRCModule):
                 self.add_module(name, mod.IRCModule())
+            else:
+                self.log.warn("No IRCModule to load in %s", name)
 
     def _local_dispatcher(self, connection, event):
         handler = "on_" + event.eventtype()
@@ -130,8 +133,12 @@ class PlaneshiftBot:
         """Register event handlers for a new module.
 
         name - string name for the module
-        ircmod - an object containing irclib event handler methods
+        ircmod - a modules.IRCModule containing irclib event handler methods
         """
+        if isinstance(ircmod, modules.IRCModule):
+            ircmod.on_load(self)
+        else:
+            raise ValueError("ircmod must be subclass of modules.IRCModule")
         for evname in irclib.all_events + ['all_events'] + unlisted_events:
             handler = "on_" + evname
             priority = 0
