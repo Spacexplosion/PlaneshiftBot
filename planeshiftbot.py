@@ -13,7 +13,7 @@ import irclib
 import modules
 
 logging.basicConfig(format="%(levelname)s: %(message)s",
-                    level=logging.INFO,
+                    level=logging.DEBUG,
                     stream=sys.stdout)
 
 class PlaneshiftBot:
@@ -293,11 +293,13 @@ def main(args):
             sys.exit(0)
     path = os.path.expanduser(path)
     path = os.path.normpath(path)
-    if daemon:
-        logging.root.removeHandler(logging.root.handlers[0])
     signal.signal(signal.SIGTERM, signalhandler)
 
     bot = PlaneshiftBot(path)
+    if daemon:
+        logging.root.removeHandler(logging.root.handlers[0])
+    else:
+        logging.root.handlers[0].setLevel(bot.log.level)
     try:
         bot.start(daemon)
     except (KeyboardInterrupt, SystemExit):
