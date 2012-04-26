@@ -1,16 +1,20 @@
 from datetime import datetime
 import shelve
 import re
+import logging
 import irclib
 import modules
 
 class IRCModule(modules.CommandMod, modules.ModCom):
-    """Stores and retrieves on command the last time a nick has been used."""
+    """Stores and retrieves on command the last time a nick has been used.
+
+    Depends on the channels module to recognize online users."""
 
     pattern = re.compile("!seen (\S+)")
 
     def __init__(self):
         self.db = {}
+        self.log = logging.getLogger("ircbot.seen")
 
     def _get_user(self, servkey, nick):
         nickkey = irclib.irc_lower(nick)
@@ -25,7 +29,7 @@ class IRCModule(modules.CommandMod, modules.ModCom):
         user.lastaction = reason
         if chan is not None:
             user.lastchannel = chan
-        self.db[servkey][user.nick] = user
+        self.db[servkey][user.nick.lower()] = user
 
     def on_welcome(self, connection, event):
         self.db[irclib.FoldedCase(connection.server)] = \
@@ -43,8 +47,13 @@ class IRCModule(modules.CommandMod, modules.ModCom):
         user = None
         if nickkey in self.db[servkey]:
             user = self.db[servkey][nickkey]
-        useron = False # TODO establish user offline
-        if not (user is None or useron):
+        if "channels" in self.bot.modules:
+            channels = self.bot.modules["channels"].get_channels_for(servkey,
+                                                                     nickkey)
+        else:
+            channels = []
+            self.log.warn("seen requires channels module to see online users")
+        if not (user is None or channels):
             response = "%s was last seen %s ago: " % \
                        (groups[0],
                         tdelta_str(datetime.utcnow() - user.lastseen))
@@ -54,12 +63,15 @@ class IRCModule(modules.CommandMod, modules.ModCom):
             else:
                 response += user.lastaction
             connection.privmsg(replyto, response)
-        elif useron:
-            response = "%s is online"
+        elif channels:
+            channames = [c.name for c in channels]
+            if replyto in channames:
+                response = groups[0] + " is here"
+            else:
+                response = groups[0] + " is on " + ','.join(channames)
             if not (user is None or user.lastspoke is None):
                 response += " and last spoke %s ago in %s" % \
-                            (groups[0], 
-                             tdelta_str(datetime.utcnow() - user.lastspoke),
+                            (tdelta_str(datetime.utcnow() - user.lastspoke),
                              user.lastchannel)
             connection.privmsg(replyto, response)
         else:
@@ -72,7 +84,7 @@ class IRCModule(modules.CommandMod, modules.ModCom):
         user = self._get_user(servkey, nick)
         user.lastspoke = datetime.utcnow()
         user.lastchannel = event.target()
-        self.db[servkey][user.nick] = user
+        self.db[servkey][user.nick.lower()] = user
 
     def on_part(self, connection, event):
         servkey = connection.server.lower()
@@ -97,7 +109,7 @@ class IRCModule(modules.CommandMod, modules.ModCom):
 class User(object):
 
     def __init__(self, nick):
-        self.nick = nick
+        self.nick = irclib.IRCFoldedCase(nick)
         self.lastseen = None
         self.lastaction = None
         self.lastspoke = None
