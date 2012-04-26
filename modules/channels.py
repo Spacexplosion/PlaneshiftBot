@@ -11,6 +11,13 @@ class IRCModule(modules.IRCModule):
         self.serverchans = {}
         self.log = logging.getLogger("ircbot.channels")
 
+    def get_channels_for(self, server, nick):
+        channels = []
+        for channel in self.serverchans[server.lower()].values():
+            if irclib.irc_lower(nick) in channel.users:
+                channels.append(channel)
+        return channels
+
     def on_welcome(self, connection, event):
         if hasattr(config, "AUTOJOIN_CHANNELS"):
             for chan in config.AUTOJOIN_CHANNELS:
@@ -72,12 +79,11 @@ class IRCModule(modules.IRCModule):
 
     def on_nick(self, connection, event):
         previous = irclib.nm_to_n(event.source())
-        for channel in self.serverchans[connection.server.lower()].values():
-            if irclib.irc_lower(previous) in channel.users:
-                channel.change_nick(previous, event.target())
-                channel.log.info("** %s is now known as %s", 
-                                 previous,
-                                 event.target())
+        for channel in self.get_channels_for(connection.server, previous):
+            channel.change_nick(previous, event.target())
+            channel.log.info("** %s is now known as %s", 
+                             previous,
+                             event.target())
 
     def on_mode(self, connection, event):
         servkey = connection.server.lower()
@@ -137,12 +143,11 @@ class IRCModule(modules.IRCModule):
     def on_quit(self, connection, event):
         quitter = irclib.nm_to_n(event.source())
         self.log.debug("quit handled for %s", quitter)
-        for channel in self.serverchans[connection.server.lower()].values():
-            if irclib.irc_lower(quitter) in channel.users:
-                channel.del_user(quitter)
-                channel.log.info("** %s has quit. (%s)", 
-                                 quitter, 
-                                 event.arguments()[0])
+        for channel in self.get_channels_for(connection.server, quitter):
+            channel.del_user(quitter)
+            channel.log.info("** %s has quit. (%s)", 
+                             quitter, 
+                             event.arguments()[0])
 
     def on_disconnect(self, connection, event):
         servkey = connection.server.lower()
@@ -194,6 +199,9 @@ class Channel(object):
 
     def __del__(self):
         self.log.removeHandler(self._loghandler)
+
+    def __str__(self):
+        return self.name
 
     def log_pubmsg(self, *args, **kwargs):
         """Does special formatting for pubmsgs
