@@ -14,6 +14,7 @@ SERVER_LIST = [
 MODULES = [ 
     "channels",
     "help",
+    "info",
     "seen",
 ]
 
@@ -51,3 +52,6 @@ CHAN_LOG_FILENAME = "%(name)s@%(server)s.log" # keywords - name, server
 CHAN_LOG_TIME_FORMAT = "%H:%M:%S" # use standard Python date format
 ## Format messages in channels
 #CHAN_LOG_MSG_FORMAT = "<%(nick)s> %(message)s" # keywords - nick, nickmask, server
+
+## info ##
+INFO_STRING = "I'm a PlaneshiftBot!"
