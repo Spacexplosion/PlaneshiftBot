@@ -13,6 +13,7 @@ SERVER_LIST = [
 ]
 MODULES = [ 
     "channels",
+    "help",
     "seen",
 ]
 

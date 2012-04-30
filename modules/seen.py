@@ -11,6 +11,7 @@ class IRCModule(modules.CommandMod, modules.ModCom):
     Depends on the channels module to recognize online users."""
 
     pattern = re.compile("!seen (\S+)")
+    help = "!seen <nick>"
 
     def __init__(self):
         self.db = {}

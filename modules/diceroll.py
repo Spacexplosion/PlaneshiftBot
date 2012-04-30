@@ -7,6 +7,7 @@ class IRCModule(modules.CommandMod):
 
     pattern = re.compile("^!roll (\d+)d(\d+)([+-]\d+)?", 
                          re.UNICODE | re.IGNORECASE)
+    help = "!roll <number>d<sides>[(+|-)<modifier>]"
 
     def on_command(self, connection, commander, replyto, groups):
         n = s = m = sum = 0
