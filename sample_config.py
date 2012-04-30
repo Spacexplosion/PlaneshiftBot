@@ -13,6 +13,7 @@ SERVER_LIST = [
 ]
 MODULES = [ 
     "channels",
+    "seen",
 ]
 
 ## Set the frequency in seconds of pinging the server
