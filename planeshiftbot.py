@@ -12,7 +12,7 @@ import getopt
 import irclib
 import modules
 
-logging.basicConfig(format="%(levelname)s: %(message)s",
+logging.basicConfig(format="%(name)s %(levelname)s: %(message)s",
                     level=logging.DEBUG,
                     stream=sys.stdout)
 
@@ -26,14 +26,14 @@ class PlaneshiftBot:
         self._timers = set()
         self._timers_lock = threading.Lock()
         self._modcom_q = Queue.Queue()
-        self.log = logging.getLogger("ircbot")
+        self.log = logging.getLogger("irc")
         self.daemonized = False
 
         self.__load_config(config_path)
 
         if not os.path.isdir("logs"):
             os.mkdir("logs")
-        logformat = logging.Formatter("%(asctime)s %(levelname)s: %(message)s",
+        logformat = logging.Formatter("%(asctime)s %(name)s %(levelname)s: %(message)s",
                                       "%Y-%m-%d %H:%M:%S")
         loghandler = logging.FileHandler("logs/bot.log")
         loghandler.setFormatter(logformat)

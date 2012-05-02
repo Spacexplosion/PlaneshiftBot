@@ -15,7 +15,7 @@ class IRCModule(modules.CommandMod, modules.ModCom):
 
     def __init__(self):
         self.db = {}
-        self.log = logging.getLogger("ircbot.seen")
+        self.log = logging.getLogger("irc.seen")
 
     def _get_user(self, servkey, nick):
         nickkey = irclib.irc_lower(nick)

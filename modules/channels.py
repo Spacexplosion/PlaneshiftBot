@@ -9,7 +9,7 @@ class IRCModule(modules.IRCModule):
 
     def __init__(self):
         self.serverchans = {}
-        self.log = logging.getLogger("ircbot.channels")
+        self.log = logging.getLogger("irc.channels")
 
     def get_channels_for(self, server, nick):
         channels = []
