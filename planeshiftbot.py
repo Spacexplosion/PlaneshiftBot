@@ -139,7 +139,7 @@ class PlaneshiftBot:
             ircmod.on_load(self)
         else:
             raise ValueError("ircmod must be subclass of modules.IRCModule")
-        for evname in irclib.all_events + ['all_events'] + unlisted_events:
+        for evname in irclib.all_events + ['all_events']:
             handler = "on_" + evname
             priority = 0
             if hasattr(ircmod, handler + "_priority"):
@@ -160,7 +160,7 @@ class PlaneshiftBot:
         if name not in self.modules:
             return
         ircmod = self.modules[name]
-        for evname in irclib.all_events + ['all_events'] + unlisted_events:
+        for evname in irclib.all_events + ['all_events']:
             handler = "on_" + evname
             if hasattr(ircmod, handler):
                 self.irc.remove_global_handler(evname, getattr(ircmod, handler))
@@ -177,13 +177,6 @@ class PlaneshiftBot:
             try:
                 self.log.info("Connecting to %s", serverargs['server'])
                 self.connections[serverargs['server']] = connection
-                # As of irclib 0.5.0, ipv6 is the only parameter not stored 
-                #  inside the ServerConnection. If that changes, this if block 
-                #  can go.
-                if "ipv6" in serverargs:
-                    connection.ipv6 = serverargs['ipv6']
-                else:
-                    connection.ipv6 = False
                 connection.connect(**serverargs)
                 if config.KEEP_ALIVE_FREQ > 0:
                     self._add_timer(config.KEEP_ALIVE_FREQ,
@@ -207,11 +200,8 @@ class PlaneshiftBot:
         elif connection is None:
             connection = self.connections[server]
         self.log.info("Reconnecting to %s", connection.server)
-        c = connection
         try:
-            connection.connect(c.server, c.port, c.nickname, c.password, 
-                               c.username, c.ircname, c.localaddress, 
-                               c.localport, (c.ssl is not None), c.ipv6)
+            connection.reconnect()
             if config.KEEP_ALIVE_FREQ > 0:
                 self._add_timer(config.KEEP_ALIVE_FREQ,
                                 self._keep_alive, (connection,))
@@ -277,10 +267,6 @@ class PlaneshiftBot:
             t.cancel()
         self._halting.set()
 
-
-# As of irclib 0.5.0, these events are not listed with the others.
-# If this changes, the explicit mention here must be removed.
-unlisted_events = ['nick', 'topic', 'action']
 
 def main(args):
     global bot
