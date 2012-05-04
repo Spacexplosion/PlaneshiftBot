@@ -139,6 +139,8 @@ class PlaneshiftBot:
             ircmod.on_load(self)
         else:
             raise ValueError("ircmod must be subclass of modules.IRCModule")
+        if isinstance(ircmod, modules.ModCom):
+            ircmod.set_queue(self._modcom_q)
         for evname in irclib.all_events + ['all_events']:
             handler = "on_" + evname
             priority = 0
@@ -148,8 +150,6 @@ class PlaneshiftBot:
                 self.irc.add_global_handler(evname, 
                                             getattr(ircmod, handler),
                                             priority)
-        if isinstance(ircmod, modules.ModCom):
-            ircmod.set_queue(self._modcom_q)
         self.modules[name] = ircmod
 
     def del_module(self, name):
@@ -164,6 +164,7 @@ class PlaneshiftBot:
             handler = "on_" + evname
             if hasattr(ircmod, handler):
                 self.irc.remove_global_handler(evname, getattr(ircmod, handler))
+        ircmod.on_unload()
         del self.modules[name]
 
     def connect(self, server_list):
@@ -309,6 +310,8 @@ def exit():
     global bot
     bot.stop()
     bot.log.info("EXITING")
+    for mod in bot.modules.values():
+        mod.on_unload()
     logging.shutdown()
     if bot.daemonized:
         os.remove("bot.pid")

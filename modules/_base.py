@@ -5,7 +5,12 @@ class IRCModule(object):
     """Base class for all Planeshiftbot modules."""
 
     def on_load(self, bot):
+        """Called just before modules' event handlers start"""
         self.bot = bot
+
+    def on_unload(self):
+        """Called just before the module is deleted"""
+        pass
 
 
 class ModCom(IRCModule):
