@@ -12,11 +12,37 @@ class IRCModule(modules.IRCModule):
         self.log = logging.getLogger("irc.channels")
 
     def get_channels_for(self, server, nick):
+        """Return a list of channels nick is on"""
         channels = []
         for channel in self.serverchans[server.lower()].values():
             if irclib.irc_lower(nick) in channel.users:
                 channels.append(channel)
         return channels
+
+    def get_users_for(self, server, channame):
+        """Return a list of users on a channel"""
+        skey = server.lower()
+        ckey = irclib.irc_lower(channame)
+        users = []
+        if skey in self.serverchans and ckey in self.serverchans[skey]:
+            users = self.serverchans[skey][ckey].users.keys()
+        return users
+
+    def put_userdata(self, server, channame, nick, datapair):
+        """Convenience method for using Channel.put_userdata()"""
+        skey = server.lower()
+        ckey = irclib.irc_lower(channame)
+        if skey in self.serverchans and ckey in self.serverchans[skey]:
+            self.serverchans[skey][ckey].put_userdata(nick, *datapair)
+
+    def get_userdata(self, server, channame, nick, datakey):
+        """Convenience method for using Channel.get_userdata()"""
+        skey = server.lower()
+        ckey = irclib.irc_lower(channame)
+        data = None
+        if skey in self.serverchans and ckey in self.serverchans[skey]:
+           data = self.serverchans[skey][ckey].get_userdata(nick, datakey)
+        return data
 
     def on_welcome(self, connection, event):
         if hasattr(config, "AUTOJOIN_CHANNELS"):
@@ -212,9 +238,11 @@ class Channel(object):
         self.log.info(*args, **kwargs)
         self._loghandler.setFormatter(self._eventmsgFormatter)
 
-    def add_user(self, name):
+    def add_user(self, name, data=None):
         """Add name to user list"""
-        self.users[irclib.IRCFoldedCase(Channel.trim_nick(name))] = None
+        if data is None:
+            data = {}
+        self.users[irclib.IRCFoldedCase(Channel.trim_nick(name))] = data
 
     def del_user(self, name):
         """Remove name from user list"""
@@ -222,8 +250,24 @@ class Channel(object):
 
     def change_nick(self, before, after):
         """Switch out nick in the user list"""
+        userdata = self.users[irclib.irc_lower(before)]
         self.del_user(before)
-        self.add_user(after)
+        self.add_user(after, userdata)
+
+    def put_userdata(self, nick, datakey, data):
+        """Store a key-value pair for a user"""
+        nickkey = irclib.irc_lower(nick)
+        if nickkey in self.users:
+            alldata = self.users[nickkey]
+            alldata[datakey] = data
+
+    def get_userdata(self, nick, datakey):
+        """Retrieve data by key for a user"""
+        nickkey = irclib.irc_lower(nick)
+        data = None
+        if nickkey in self.users and datakey in self.users[nickkey]:
+            data = self.users[nickkey][datakey]
+        return data
 
     @classmethod
     def trim_nick(clas, nick):
