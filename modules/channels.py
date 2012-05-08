@@ -96,6 +96,13 @@ class IRCModule(modules.IRCModule):
                    "server" : connection.server}
         channel.log_pubmsg(event.arguments()[0], extra=logargs)
 
+    def on_pubnotice(self, connection, event):
+        channel = self.serverchans[connection.server.lower()]\
+                                  [irclib.irc_lower(event.target())]
+        channel.log.info("*%s* %s",
+                         irclib.nm_to_n(event.source()),
+                         event.arguments()[0])
+
     def on_action(self, connection, event):
         channel = self.serverchans[connection.server.lower()]\
                                   [irclib.irc_lower(event.target())]
