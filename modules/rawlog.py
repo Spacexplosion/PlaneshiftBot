@@ -6,7 +6,7 @@ REAL_RAW = False
 class LogBot(modules.IRCModule):
 
     def __init__(self):
-        self.log = logging.getLogger("irc.rawlog")
+        self.log = logging.getLogger("irc.raw")
 
     def on_all_events(self, connection, event):
         if (event.eventtype() == "all_raw_messages") and REAL_RAW:
