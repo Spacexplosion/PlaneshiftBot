@@ -36,8 +36,10 @@ LOGLEVEL = "INFO" # DEBUG, INFO, WARNING, ERROR
 
 ## Join these channels : channel_name, [optional list of servers]
 AUTOJOIN_CHANNELS = [ 
-    "#planeshiftbot-testing",
-# example: ("#quakelive", ["irc.quakenet.org"]),
+    "#planeshiftbot-testing", # "#channel",
+# ("#channel", "password"),
+# ("#channel", ["server1", "server2", ...]),
+# ("#channel", ["server1", "server2", ...], ["pass1", "pass2", ...]),
 ]
 
 ## Set the number of seconds to wait to rejoin after kicked

@@ -49,9 +49,16 @@ class IRCModule(modules.IRCModule):
             for chan in config.AUTOJOIN_CHANNELS:
                 if isinstance(chan, str):
                     connection.join(chan)
-                else:
-                    if len(chan) == 1 or connection.server in chan[1]:
-                        connection.join(chan[0])
+                elif len(chan) > 1 and isinstance(chan[1], str):
+                    connection.join(chan[0], chan[1])
+                elif len(chan) > 2:
+                    try:
+                        i = chan[1].index(connection.server)
+                        connection.join(chan[0], chan[2][i])
+                    except ValueError:
+                        pass
+                elif len(chan) == 1 or connection.server in chan[1]:
+                    connection.join(chan[0])
 
     def on_invite(self, connection, event):
         if not (hasattr(config, "JOIN_INVITES") and config.JOIN_INVITES):
@@ -190,6 +197,15 @@ class IRCModule(modules.IRCModule):
                                  connection.server, 
                                  event.arguments()[0])
             del self.serverchans[servkey]
+
+    def on_inviteonlychan(self, connection, event):
+        self.log.warn("Cannot join %s, invite only", event.arguments()[0])
+
+    def on_bannedfromchan(self, connection, event):
+        self.log.warn("Cannot join %s, banned", event.arguments()[0])
+
+    def on_badchannelkey(self, connection, event):
+        self.log.warn("Cannot join %s, wrong password", event.arguments()[0])
 
 
 class Channel(object):
