@@ -62,6 +62,8 @@ class PlaneshiftBot:
             sys.exit(1)
 
         # set defaults
+        if not hasattr(config, "SERVER_PROPS"):
+            config.SERVER_PROPS = []
         if not hasattr(config, "KEEP_ALIVE_FREQ"):
             config.KEEP_ALIVE_FREQ = 30
         if not (hasattr(config, "PING_TIMEOUT") and config.PING_TIMEOUT > 0):
@@ -173,12 +175,16 @@ class PlaneshiftBot:
         server_list - a list of dictionaries containing keyword arguments for
                       irclib.ServerConnection.connect()
         """
+        i = 0
         for serverargs in server_list:
             connection = self.irc.server()
             try:
                 self.log.info("Connecting to %s", serverargs['server'])
                 self.connections[serverargs['server']] = connection
                 connection.connect(**serverargs)
+                if i < len(config.SERVER_PROPS):
+                    for (prop, val) in config.SERVER_PROPS[i].iteritems():
+                        setattr(connection, prop, val)
                 if config.KEEP_ALIVE_FREQ > 0:
                     self._add_timer(config.KEEP_ALIVE_FREQ,
                                     self._keep_alive, (connection,))
@@ -188,6 +194,7 @@ class PlaneshiftBot:
             except Exception:
                 self.log.error("Configuration failure on %s", serverargs['server'])
                 self.log.debug("".join(traceback.format_exception(*sys.exc_info())))
+            i += 1
 
     def reconnect(self, connection=None, server=""):
         """Reconnect to a server.

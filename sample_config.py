@@ -17,6 +17,12 @@ MODULES = [
     "info",
     "seen",
 ]
+SERVER_PROPS = [ # matching order with SERVER_LIST
+    {#"QAUTH_USER" : "user",
+     #"QAUTH_PASS" : "password",
+     #<module_specific_key> : <module_specific_value>,
+    },
+]
 
 ## Set the frequency in seconds of pinging the server
 #KEEP_ALIVE_FREQ = 30 # (default 30, <=0 turns off)
@@ -46,7 +52,7 @@ AUTOJOIN_CHANNELS = [
 #KICK_REJOIN_WAIT -1 # (default off)
 
 ## Join any channel the bot gets invited to?
-# JOIN_INVITES = False
+#JOIN_INVITES = False
 
 ## Format file name for logs (use standard Python formatting)
 CHAN_LOG_FILENAME = "%(name)s@%(server)s.log" # keywords - name, server
