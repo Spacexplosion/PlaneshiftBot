@@ -44,3 +44,11 @@ class CommandMod(IRCModule):
         groups - matching regex groups from pattern
         """
         connection.privmsg(replyto, "what's %s?" % groups[0])
+
+
+def trim_nick(nick):
+    """Return the nick minus op/voice decorators"""
+    if nick.startswith(('@','+')):
+        return nick[1:]
+    else:
+        return nick

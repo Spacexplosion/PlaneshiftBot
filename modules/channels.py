@@ -265,11 +265,11 @@ class Channel(object):
         """Add name to user list"""
         if data is None:
             data = {}
-        self.users[irclib.IRCFoldedCase(Channel.trim_nick(name))] = data
+        self.users[irclib.IRCFoldedCase(modules.trim_nick(name))] = data
 
     def del_user(self, name):
         """Remove name from user list"""
-        del self.users[irclib.IRCFoldedCase(Channel.trim_nick(name))]
+        del self.users[irclib.IRCFoldedCase(modules.trim_nick(name))]
 
     def change_nick(self, before, after):
         """Switch out nick in the user list"""
@@ -291,11 +291,3 @@ class Channel(object):
         if nickkey in self.users and datakey in self.users[nickkey]:
             data = self.users[nickkey][datakey]
         return data
-
-    @classmethod
-    def trim_nick(clas, nick):
-        """Return the nick minus op/voice decorators"""
-        if nick.startswith(('@','+')):
-            return nick[1:]
-        else:
-            return nick
