@@ -5,7 +5,7 @@ import logging
 import irclib
 import modules
 
-class IRCModule(modules.CommandMod, modules.ModCom):
+class IRCModule(modules.CommandMod):
     """Stores and retrieves on command the last time a nick has been used.
 
     Depends on the channels module to recognize online users."""

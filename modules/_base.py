@@ -13,33 +13,6 @@ class IRCModule(object):
         pass
 
 
-class ModCom(IRCModule):
-    """A superclass for IRCModules that send events to each other."""
-
-    def set_queue(self, queue):
-        """Set the queue to use for outgoing events.
-        
-        queue - Queue.Queue object
-        """
-        self.com_queue = queue
-
-    def send_to(self, mod, type="unknown", data=None, connection=None):
-        """Send event to another module.
-
-        mod - module name of recipient
-        type - event type
-        data - event arguments
-        """
-        me = self.__module__.split('.')[-1]
-        self.com_queue.put((connection, irclib.Event(type, me, mod, data)))
-
-    def dispatch(self, connection, event):
-        """Find and execute a handler for event on this module."""
-        handler = "on_" + event.eventtype()
-        if hasattr(self, handler):
-            getattr(self, handler)(connection, event)
-
-
 class CommandMod(IRCModule):
     """A superclass for IRCModules that should respond to a command."""
 

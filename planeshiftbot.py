@@ -141,8 +141,6 @@ class PlaneshiftBot:
             ircmod.on_load(self)
         else:
             raise ValueError("ircmod must be subclass of modules.IRCModule")
-        if isinstance(ircmod, modules.ModCom):
-            ircmod.set_queue(self._modcom_q)
         for evname in irclib.all_events + ['all_events']:
             handler = "on_" + evname
             priority = 0
