@@ -4,6 +4,9 @@ import config
 import modules
 
 class IRCModule(modules.IRCModule):
+    """Authenticate on QuakeNet and track other Q users.
+
+    Depends on channels module to recognize online users."""
 
     def __init__(self):
         self.serverusers = {}

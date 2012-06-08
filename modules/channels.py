@@ -6,6 +6,7 @@ import config
 import modules
 
 class IRCModule(modules.IRCModule):
+    """Join/administrate channels and track users in them"""
 
     def __init__(self):
         self.serverchans = {}

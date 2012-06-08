@@ -4,6 +4,7 @@ import modules
 REAL_RAW = False
 
 class LogBot(modules.IRCModule):
+    """Log all events supported by irclib"""
 
     def __init__(self):
         self.log = logging.getLogger("irc.raw")

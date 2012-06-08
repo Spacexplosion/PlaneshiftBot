@@ -4,6 +4,7 @@ import random
 import modules
 
 class IRCModule(modules.CommandMod):
+    """Roll a combination of virtual dice"""
 
     pattern = re.compile("^!roll (\d+)d(\d+)([+-]\d+)?", 
                          re.UNICODE | re.IGNORECASE)

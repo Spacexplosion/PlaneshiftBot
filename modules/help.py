@@ -3,6 +3,7 @@ import irclib
 import modules
 
 class IRCModule(modules.CommandMod):
+    """Display help messages from other modules"""
 
     pattern = re.compile("!(triggers|help)\s?(\S+)?\s?(.+)?")
 
