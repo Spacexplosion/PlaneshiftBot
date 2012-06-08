@@ -55,10 +55,6 @@ class IRCModule(modules.IRCModule):
     def on_join(self, connection, event):
         nick = irclib.nm_to_n(event.source())
         connection.whois([nick])
-        auth = self.get_auth_for(connection.server, nick)
-        if auth is not None:
-            nicks = self.get_nicks_for(connection.server, auth)
-            connection.privmsg(event.target(), "%s is the same as %s!" % (auth, ", ".join(nicks)))
 
     def on_whoisauth(self, connection, event):
         self.log.debug("%s is authed as %s", *event.arguments()[:2])
