@@ -56,6 +56,8 @@ class IRCModule(modules.IRCModule):
         connection.whois(nicks)
 
     def on_join(self, connection, event):
+        if not hasattr(connection, "QAUTH_USER"):
+            return
         nick = irclib.nm_to_n(event.source())
         connection.whois([nick])
 

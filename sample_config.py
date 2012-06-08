@@ -20,6 +20,7 @@ MODULES = [
 SERVER_PROPS = [ # matching order with SERVER_LIST
     {#"QAUTH_USER" : "user",
      #"QAUTH_PASS" : "password",
+     #"AUTHDATA_MOD" : "qauth",
      #<module_specific_key> : <module_specific_value>,
     },
 ]

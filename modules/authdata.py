@@ -11,7 +11,7 @@ class IRCModule(modules.IRCModule):
 
     def __init__(self):
         self.serverauths = {}
-        self.authmod = None
+        self.servermods = {}
         self.log = logging.getLogger("irc.authdata")
 
     def put_authdata(self, server, name, datakey, data):
@@ -35,8 +35,9 @@ class IRCModule(modules.IRCModule):
     def put_userdata(self, server, nick, datakey, data):
         """Store a key-value pair for an IRC user if auth'ed"""
         authname = None
-        if self.authmod is not None:
-            authname = self.authmod.get_auth_for(server, nick)
+        skey = server.lower()
+        if skey in self.servermods:
+            authname = self.servermods[skey].get_auth_for(server, nick)
         if authname is not None:
             self.put_authdata(server, authname, datakey, data)
 
@@ -44,22 +45,22 @@ class IRCModule(modules.IRCModule):
         """Retrieve data by key for an IRC user if auth'ed"""
         authname = None
         data = None
-        if self.authmod is not None:
-            authname = self.authmod.get_auth_for(server, nick)
+        skey = server.lower()
+        if skey in self.servermods:
+            authname = self.servermods[skey].get_auth_for(server, nick)
         if authname is not None:
             data = self.get_authdata(server, authname, datakey)
         return data
 
-    def on_load(self, bot):
-        super(IRCModule, self).on_load(bot)
-        if "qauth" in bot.modules:
-            self.authmod = bot.modules["qauth"]
-        else:
-            self.log.warn("No auth module found.")
-
     def on_welcome(self, connection, event):
-        self.serverauths[irclib.FoldedCase(connection.server)] = \
+        server = irclib.FoldedCase(connection.server)
+        self.serverauths[server] = \
             shelve.open(connection.server.lower() + "-auth.db")
+        if hasattr(connection, "AUTHDATA_MOD") \
+                and connection.AUTHDATA_MOD in self.bot.modules:
+            self.servermods[server] = self.bot.modules[connection.AUTHDATA_MOD]
+        else:
+            self.log.info("No auth module for %s", connection.server)
 
     def on_disconnect(self, connection, event):
         servkey = connection.server.lower()
