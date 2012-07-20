@@ -20,8 +20,10 @@ class IRCModule(modules.IRCModule):
         skey = server.lower()
         nkey = irclib.irc_lower(name)
         if nkey not in self.serverauths[skey]:
+            self.log.debug("Making new auth entry")
             self.serverauths[skey][irclib.IRCFoldedCase(name)] = {}
         self.serverauths[skey][nkey][datakey] = data
+        self.log.debug("put %s:%s:%s:%s", server, name, str(datakey), str(data))
 
     def get_authdata(self, server, name, datakey):
         """Retrieve data by key for an auth user"""
@@ -31,6 +33,7 @@ class IRCModule(modules.IRCModule):
         if nkey in self.serverauths[skey] \
                 and datakey in self.serverauths[skey][nkey]:
             data = self.serverauths[skey][nkey][datakey]
+        self.log.debug("got %s:%s:%s:%s", server, name, str(datakey), str(data))
         return data
 
     def put_userdata(self, server, nick, datakey, data):
@@ -66,6 +69,9 @@ class IRCModule(modules.IRCModule):
         if hasattr(connection, "AUTHDATA_MOD") \
                 and connection.AUTHDATA_MOD in self.bot.modules:
             self.servermods[server] = self.bot.modules[connection.AUTHDATA_MOD]
+            self.log.debug("%s loaded for %s", 
+                           connection.AUTHDATA_MOD,
+                           connection.server)
         else:
             self.servermods[server] = self.dummyauth
             self.log.info("No auth module for %s", connection.server)
@@ -73,6 +79,7 @@ class IRCModule(modules.IRCModule):
     def on_disconnect(self, connection, event):
         servkey = connection.server.lower()
         if servkey in self.serverauths:
+            self.log.debug("Writing database")
             self.serverauths[servkey].close()
             del self.serverauths[servkey]
 
