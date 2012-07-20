@@ -12,6 +12,7 @@ class IRCModule(modules.IRCModule):
     def __init__(self):
         self.serverauths = {}
         self.servermods = {}
+        self.dummyauth = DummyAuthMod()
         self.log = logging.getLogger("irc.authdata")
 
     def put_authdata(self, server, name, datakey, data):
@@ -36,8 +37,7 @@ class IRCModule(modules.IRCModule):
         """Store a key-value pair for an IRC user if auth'ed"""
         authname = None
         skey = server.lower()
-        if skey in self.servermods:
-            authname = self.servermods[skey].get_auth_for(server, nick)
+        authname = self.servermods[skey].get_auth_for(server, nick)
         if authname is not None:
             self.put_authdata(server, authname, datakey, data)
 
@@ -46,11 +46,18 @@ class IRCModule(modules.IRCModule):
         authname = None
         data = None
         skey = server.lower()
-        if skey in self.servermods:
-            authname = self.servermods[skey].get_auth_for(server, nick)
+        authname = self.servermods[skey].get_auth_for(server, nick)
         if authname is not None:
             data = self.get_authdata(server, authname, datakey)
         return data
+
+    def get_auth_for(self, server, nick):
+        """Convenience method for auth mod pass-through"""
+        return self.servermods[server.lower()].get_auth_for(server, nick)
+
+    def get_nicks_for(self, server, authname):
+        """Convenience method for auth mod pass-through"""
+        return self.servermods[server.lower()].get_nicks_for(server, authname)
 
     def on_welcome(self, connection, event):
         server = irclib.FoldedCase(connection.server)
@@ -60,6 +67,7 @@ class IRCModule(modules.IRCModule):
                 and connection.AUTHDATA_MOD in self.bot.modules:
             self.servermods[server] = self.bot.modules[connection.AUTHDATA_MOD]
         else:
+            self.servermods[server] = self.dummyauth
             self.log.info("No auth module for %s", connection.server)
 
     def on_disconnect(self, connection, event):
@@ -67,3 +75,12 @@ class IRCModule(modules.IRCModule):
         if servkey in self.serverauths:
             self.serverauths[servkey].close()
             del self.serverauths[servkey]
+
+
+class DummyAuthMod(object):
+    
+    def get_auth_for(self, server, nick):
+        return None
+
+    def get_nicks_for(self, server, name):
+        return []
