@@ -39,7 +39,7 @@ class IRCModule(modules.CommandMod):
         elif cmd[0] == "read":
             memos = self.datamod.get_userdata(connection.server, nick, "memos")
             if memos is not None:
-                for (sender, msgs) in memos:
+                for (sender, msgs) in memos.iteritems():
                     for msg in msgs:
                         connection.privmsg(nick, "[%s] %s" % (sender, msg))
             self.datamod.put_userdata(connection.server, nick, "memos", {})

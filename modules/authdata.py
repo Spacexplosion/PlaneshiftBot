@@ -65,7 +65,7 @@ class IRCModule(modules.IRCModule):
     def on_welcome(self, connection, event):
         server = irclib.FoldedCase(connection.server)
         self.serverauths[server] = \
-            shelve.open(connection.server.lower() + "-auth.db")
+            shelve.open(connection.server.lower() + "-auth.db", writeback=True)
         if hasattr(connection, "AUTHDATA_MOD") \
                 and connection.AUTHDATA_MOD in self.bot.modules:
             self.servermods[server] = self.bot.modules[connection.AUTHDATA_MOD]
