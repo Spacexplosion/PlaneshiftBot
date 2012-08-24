@@ -4,13 +4,15 @@ import irclib
 import config
 import modules
 
-class IRCModule(modules.CommandMod):
+class MemoMod(modules.CommandMod):
     """Send offline memos to authenticated users.
 
     Depends on authdata."""
 
     pattern = re.compile("memo\s+(.+)")
     IGNORE_PUBLIC = True
+
+    JOIN_DELAY = 3
 
     def __init__(self):
         self.log = logging.getLogger("irc.memo")
@@ -20,6 +22,17 @@ class IRCModule(modules.CommandMod):
         if "authdata" not in bot.modules:
             raise RuntimeError("Memo service requires authdata module")
         self.datamod = bot.modules["authdata"]
+        if hasattr(config, "MEMO_JOIN_DELAY"):
+            MemoMod.JOIN_DELAY = config.MEMO_JOIN_DELAY
+
+    def on_join(self, connection, event):
+        def join_notice():
+            memos = self.datamod.get_userdata(connection.server, nick, "memos")
+            if memos is not None:
+                connection.notice(nick, "You have unread memos; msg me \"memo read\"")
+        nick = irclib.nm_to_n(event.source())
+        if MemoMod.JOIN_DELAY > 0:
+            self.bot.irc.execute_delayed(MemoMod.JOIN_DELAY, join_notice)
 
     def on_command(self, connection, nickmask, nick, groups):
         cmd = groups[0].split(' ')
@@ -73,3 +86,5 @@ class IRCModule(modules.CommandMod):
         response = "private message only. subcommands are: read, send"
         if cmdstr is not None:
             cmd = cmdstr.split(' ')
+
+IRCModule = MemoMod

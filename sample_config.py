@@ -64,3 +64,7 @@ CHAN_LOG_TIME_FORMAT = "%H:%M:%S" # use standard Python date format
 
 ## info ##
 INFO_STRING = "I'm a PlaneshiftBot!"
+
+## memo ##
+## wait time after a join before querying for unread memos (<= 0 is off)
+#MEMO_JOIN_DELAY = 3

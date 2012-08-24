@@ -7,6 +7,7 @@ class IRCModule(modules.IRCModule):
     """Authenticate on QuakeNet and track other Q users.
 
     Depends on channels module to recognize online users."""
+    #TODO Figure a way to recognize users auth'd after join
 
     def __init__(self):
         self.serverusers = {}
