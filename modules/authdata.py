@@ -21,9 +21,9 @@ class IRCModule(modules.IRCModule):
         nkey = irclib.irc_lower(name)
         if nkey not in self.serverauths[skey]:
             self.log.debug("Making new auth entry")
-            self.serverauths[skey][irclib.IRCFoldedCase(name)] = {}
+            self.serverauths[skey][nkey] = {} #can't use FoldedCase as db key
         self.serverauths[skey][nkey][datakey] = data
-        self.log.debug("put %s:%s:%s:%s", server, name, str(datakey), str(data))
+        self.log.debug("put %s:%s:%s:%s", server, nkey, str(datakey), str(data))
 
     def get_authdata(self, server, name, datakey):
         """Retrieve data by key for an auth user"""
