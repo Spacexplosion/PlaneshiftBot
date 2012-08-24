@@ -83,8 +83,16 @@ class MemoMod(modules.CommandMod):
                                       "memos", to_memos)
 
     def help(self, cmdstr):
-        response = "private message only. subcommands are: read, send"
+        response = "private message only. subcommands are: on, off, read, send"
         if cmdstr is not None:
             cmd = cmdstr.split(' ')
+            if cmd[0] == "on" or cmd[0] == "off":
+                response = "memo [on|off] : controls whether others can send you memos"
+            elif cmd[0] == "read":
+                response = "memo read : view all unread memos"
+            elif cmd[0] == "send":
+                response = "memo send <username> <message> : write a memo to the specified authentication service username"
+        return response
+
 
 IRCModule = MemoMod
