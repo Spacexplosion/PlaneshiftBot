@@ -1,4 +1,4 @@
-import irclib
+import irc
 import re
 import random
 import modules
@@ -21,10 +21,10 @@ class IRCModule(modules.CommandMod):
             return
         if n > 100000: # arbitrary iteration limit
             connection.privmsg(replyto, "%s is trying to break me. :(" % \
-                                   irclib.nm_to_n(commander))
+                               commander.nick)
             return
         for i in range(n):
             sum += random.randint(1, s)
         sum += m
         connection.privmsg(replyto,"%s rolls %d" % \
-                               (irclib.nm_to_n(commander),  sum))
+                           (commander.nick,  sum))

@@ -1,4 +1,4 @@
-import irclib
+import irc
 import re
 
 class IRCModule(object):
@@ -22,22 +22,22 @@ class CommandMod(IRCModule):
     '''When True, only respond over private query'''
 
     def on_privmsg(self, connection, event):
-        match = self.pattern.search(event.arguments()[0])
+        match = self.pattern.search(event.arguments[0])
         if match:
-            self.on_command(connection, event.source(), 
-                            irclib.nm_to_n(event.source()), match.groups())
+            self.on_command(connection, event.source, 
+                            event.source.nick, match.groups())
 
     def on_pubmsg(self, connection, event):
         if not self.IGNORE_PUBLIC:
-            match = self.pattern.search(event.arguments()[0])
+            match = self.pattern.search(event.arguments[0])
             if match:
-                self.on_command(connection, event.source(), 
-                                event.target(), match.groups())
+                self.on_command(connection, event.source, 
+                                event.target, match.groups())
 
     def on_command(self, connection, commander, replyto, groups):
         """Called when self.pattern matches a message.
 
-        connection - the corresponding irclib.ServerConnection
+        connection - the corresponding irc.ServerConnection
         commander - nickmask of the user who sent the message
         replyto - the channel where the message appeared if public, 
                   nick of commander if private

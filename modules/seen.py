@@ -2,7 +2,8 @@ from datetime import datetime
 import shelve
 import re
 import logging
-import irclib
+import irc
+import irc.strings
 import modules
 
 class IRCModule(modules.CommandMod):
@@ -18,7 +19,7 @@ class IRCModule(modules.CommandMod):
         self.log = logging.getLogger("irc.seen")
 
     def _get_user(self, servkey, nick):
-        nickkey = irclib.irc_lower(nick)
+        nickkey = irc.strings.lower(nick)
         if nickkey in self.db[servkey]:
             return self.db[servkey][nickkey]
         else:
@@ -33,7 +34,7 @@ class IRCModule(modules.CommandMod):
         self.db[servkey][user.nick.lower()] = user
 
     def on_welcome(self, connection, event):
-        self.db[irclib.FoldedCase(connection.server)] = \
+        self.db[irc.strings.FoldedCase(connection.server)] = \
             shelve.open(connection.server.lower() + "-seen.db")
 
     def on_disconnect(self, connection, event):
@@ -44,7 +45,7 @@ class IRCModule(modules.CommandMod):
 
     def on_command(self, connection, commander, replyto, groups):
         servkey = connection.server.lower()
-        nickkey = irclib.irc_lower(groups[0])
+        nickkey = irc.strings.lower(groups[0])
         user = None
         if nickkey in self.db[servkey]:
             user = self.db[servkey][nickkey]
@@ -81,36 +82,36 @@ class IRCModule(modules.CommandMod):
     def on_pubmsg(self, connection, event):
         super(IRCModule, self).on_pubmsg(connection, event)
         servkey = connection.server.lower()
-        nick = irclib.nm_to_n(event.source())
+        nick = event.source.nick
         user = self._get_user(servkey, nick)
         user.lastspoke = datetime.utcnow()
-        user.lastchannel = event.target()
+        user.lastchannel = event.target
         self.db[servkey][user.nick.lower()] = user
 
     def on_part(self, connection, event):
         servkey = connection.server.lower()
-        nick = irclib.nm_to_n(event.source())
-        self._nick_exit(servkey, nick, "part", event.target())
+        nick = event.source.nick
+        self._nick_exit(servkey, nick, "part", event.target)
 
     def on_kick(self, connection, event):
         servkey = connection.server.lower()
-        self._nick_exit(servkey, event.arguments()[0], "kick", event.target())
+        self._nick_exit(servkey, event.arguments[0], "kick", event.target)
 
     def on_nick(self, connection, event):
         servkey = connection.server.lower()
-        nick = irclib.nm_to_n(event.source())
+        nick = event.source.nick
         self._nick_exit(servkey, nick, "nick change")
 
     def on_quit(self, connection, event):
         servkey = connection.server.lower()
-        nick = irclib.nm_to_n(event.source())
+        nick = event.source.nick
         self._nick_exit(servkey, nick, "quit")
 
 
 class User(object):
 
     def __init__(self, nick):
-        self.nick = irclib.IRCFoldedCase(nick)
+        self.nick = irc.strings.IRCFoldedCase(nick)
         self.lastseen = None
         self.lastaction = None
         self.lastspoke = None

@@ -1,6 +1,7 @@
 import logging
 import shelve
-import irclib
+import irc
+import irc.strings
 import config
 import modules
 
@@ -18,7 +19,7 @@ class IRCModule(modules.IRCModule):
     def put_authdata(self, server, name, datakey, data):
         """Store a key-value pair for a auth user"""
         skey = server.lower()
-        nkey = irclib.irc_lower(name)
+        nkey = irc.strings.lower(name)
         if nkey not in self.serverauths[skey]:
             self.log.debug("Making new auth entry")
             self.serverauths[skey][nkey] = {} #can't use FoldedCase as db key
@@ -28,7 +29,7 @@ class IRCModule(modules.IRCModule):
     def get_authdata(self, server, name, datakey):
         """Retrieve data by key for an auth user"""
         skey = server.lower()
-        nkey = irclib.irc_lower(name)
+        nkey = irc.strings.lower(name)
         data = None
         if nkey in self.serverauths[skey] \
                 and datakey in self.serverauths[skey][nkey]:
@@ -63,7 +64,7 @@ class IRCModule(modules.IRCModule):
         return self.servermods[server.lower()].get_nicks_for(server, authname)
 
     def on_welcome(self, connection, event):
-        server = irclib.FoldedCase(connection.server)
+        server = irc.strings.FoldedCase(connection.server)
         self.serverauths[server] = \
             shelve.open(connection.server.lower() + "-auth.db", writeback=True)
         if hasattr(connection, "AUTHDATA_MOD") \

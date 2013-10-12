@@ -1,5 +1,5 @@
 import re
-import irclib
+import irc
 import modules
 
 class IRCModule(modules.CommandMod):

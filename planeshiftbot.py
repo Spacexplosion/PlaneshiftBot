@@ -9,7 +9,9 @@ import logging
 import threading
 import Queue
 import getopt
-import irclib
+import irc
+import irc.client
+import irc.events
 import modules
 
 logging.basicConfig(format="%(name)s %(levelname)s: %(message)s",
@@ -22,7 +24,7 @@ class PlaneshiftBot:
         self.modules = {}
         self.connections = {}
         self.dccs = []
-        self.irc = irclib.IRC()
+        self.irc = irc.client.IRC()
         self._timers = set()
         self._timers_lock = threading.Lock()
         self.log = logging.getLogger("irc")
@@ -86,7 +88,7 @@ class PlaneshiftBot:
                 self.log.warn("No IRCModule to load in %s", name)
 
     def _local_dispatcher(self, connection, event):
-        handler = "on_" + event.eventtype()
+        handler = "on_" + event.type
         if hasattr(self, handler):
             getattr(self, handler)(connection, event)
 
@@ -132,7 +134,7 @@ class PlaneshiftBot:
             ircmod.on_load(self)
         else:
             raise ValueError("ircmod must be subclass of modules.IRCModule")
-        for evname in irclib.all_events + ['all_events']:
+        for evname in irc.events.all + ['all_events']:
             handler = "on_" + evname
             priority = 0
             if hasattr(ircmod, handler + "_priority"):
@@ -151,7 +153,7 @@ class PlaneshiftBot:
         if name not in self.modules:
             return
         ircmod = self.modules[name]
-        for evname in irclib.all_events + ['all_events']:
+        for evname in irc.events.all + ['all_events']:
             handler = "on_" + evname
             if hasattr(ircmod, handler):
                 self.irc.remove_global_handler(evname, getattr(ircmod, handler))
@@ -162,7 +164,7 @@ class PlaneshiftBot:
         """Connect to a list of servers.
 
         server_list - a list of dictionaries containing keyword arguments for
-                      irclib.ServerConnection.connect()
+                      irc.ServerConnection.connect()
         """
         i = 0
         for serverargs in server_list:
@@ -177,8 +179,8 @@ class PlaneshiftBot:
                 if config.KEEP_ALIVE_FREQ > 0:
                     self._add_timer(config.KEEP_ALIVE_FREQ,
                                     self._keep_alive, (connection,))
-            except irclib.ServerConnectionError:
-                e = irclib.Event("disconnect", "", "", ["Failed to connect"])
+            except irc.client.ServerConnectionError:
+                e = irc.client.Event("disconnect", "", "", ["Failed to connect"])
                 self.on_disconnect(connection, e)
             except Exception:
                 self.log.error("Configuration failure on %s", serverargs['server'])
@@ -188,7 +190,7 @@ class PlaneshiftBot:
     def reconnect(self, connection=None, server=""):
         """Reconnect to a server.
 
-        connection - irclib.ServerConnection that has previously connected
+        connection - irc.client.ServerConnection that has previously connected
         server - hostname to look up; ignored if connection is given
         """
         if connection is None and server not in self.connections:
@@ -202,14 +204,14 @@ class PlaneshiftBot:
             if config.KEEP_ALIVE_FREQ > 0:
                 self._add_timer(config.KEEP_ALIVE_FREQ,
                                 self._keep_alive, (connection,))
-        except irclib.ServerConnectionError:
-            e = irclib.Event("disconnect", "", "", ["Failed to reconnect"])
+        except irc.client.ServerConnectionError:
+            e = irc.client.Event("disconnect", "", "", ["Failed to reconnect"])
             self.on_disconnect(connection, e)
 
     def on_disconnect(self, connection, event):
         """Handle disconnect events by scheduling reconnect."""
         self.log.warn("Disconnected from %s: %s", 
-                      connection.server, event.arguments()[0])
+                      connection.server, event.arguments[0])
         if config.RECONNECT_WAIT >= 0:
             self._add_timer(config.RECONNECT_WAIT, 
                             self.reconnect, (connection,))

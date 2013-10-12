@@ -1,6 +1,6 @@
 import logging
 import re
-import irclib
+import irc
 import config
 import modules
 
@@ -30,7 +30,7 @@ class MemoMod(modules.CommandMod):
             memos = self.datamod.get_userdata(connection.server, nick, "memos")
             if memos is not None:
                 connection.notice(nick, "You have unread memos; msg me \"memo read\"")
-        nick = irclib.nm_to_n(event.source())
+        nick = event.source.nick
         if MemoMod.JOIN_DELAY > 0:
             self.bot.irc.execute_delayed(MemoMod.JOIN_DELAY, join_notice)
 

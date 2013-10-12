@@ -1,5 +1,7 @@
 import logging
-import irclib
+import irc
+import irc.events
+import irc.strings
 import config
 import modules
 
@@ -18,7 +20,7 @@ class IRCModule(modules.IRCModule):
         """Return the auth name for the nick or None"""
         auth = None
         servkey = server.lower()
-        nickkey = irclib.irc_lower(nick)
+        nickkey = irc.strings.lower(nick)
         if nickkey in self.serverusers[servkey]:
             auth = self.serverusers[servkey][nickkey]
         return auth
@@ -30,8 +32,8 @@ class IRCModule(modules.IRCModule):
 
     def on_load(self, bot):
         super(IRCModule, self).on_load(bot)
-        irclib.numeric_events["330"] = "whoisauth"
-        irclib.all_events.append("whoisauth")
+        irc.events.numeric["330"] = "whoisauth"
+        irc.events.all.append("whoisauth")
         if "channels" in bot.modules:
             self.chanmod = bot.modules["channels"]
         else:
@@ -45,7 +47,7 @@ class IRCModule(modules.IRCModule):
                                          connection.QAUTH_PASS]))
         else:
             self.log.warn("No credentials. Not authenticating...")
-        self.serverusers[irclib.FoldedCase(connection.server)] = {}
+        self.serverusers[irc.strings.FoldedCase(connection.server)] = {}
 
     on_endofnames_priority = 10
     def on_endofnames(self, connection, event):
@@ -53,25 +55,25 @@ class IRCModule(modules.IRCModule):
             return
         nicks = [modules.trim_nick(n) for n in \
                      self.chanmod.get_users_for(connection.server,
-                                                event.arguments()[0])]
+                                                event.arguments[0])]
         connection.whois(nicks)
 
     def on_join(self, connection, event):
         if not hasattr(connection, "QAUTH_USER"):
             return
-        nick = irclib.nm_to_n(event.source())
+        nick = event.source.nick
         connection.whois([nick])
 
     def on_whoisauth(self, connection, event):
-        self.log.debug("%s is authed as %s", *event.arguments()[:2])
+        self.log.debug("%s is authed as %s", *event.arguments[:2])
         servkey = connection.server.lower()
-        nick = irclib.IRCFoldedCase(event.arguments()[0])
-        auth = irclib.IRCFoldedCase(event.arguments()[1])
+        nick = irc.strings.IRCFoldedCase(event.arguments[0])
+        auth = irc.strings.IRCFoldedCase(event.arguments[1])
         self.serverusers[servkey][nick] = auth
 
     def on_quit(self, connection, event):
         servkey = connection.server.lower()
-        nickkey = irclib.irc_lower(irclib.nm_to_n(event.source()))
+        nickkey = irc.strings.lower(event.source.nick)
         if nickkey in self.serverusers[servkey]:
             del self.serverusers[servkey][nickkey]
 
