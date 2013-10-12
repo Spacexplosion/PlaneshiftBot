@@ -19,17 +19,17 @@ class IRCModule(modules.IRCModule):
     def put_authdata(self, server, name, datakey, data):
         """Store a key-value pair for a auth user"""
         skey = server.lower()
-        nkey = irc.strings.lower(name)
+        nkey = str(irc.strings.lower(name)) #can't use FoldedCase as db key
         if nkey not in self.serverauths[skey]:
             self.log.debug("Making new auth entry")
-            self.serverauths[skey][nkey] = {} #can't use FoldedCase as db key
+            self.serverauths[skey][nkey] = {}
         self.serverauths[skey][nkey][datakey] = data
         self.log.debug("put %s:%s:%s:%s", server, nkey, str(datakey), str(data))
 
     def get_authdata(self, server, name, datakey):
         """Retrieve data by key for an auth user"""
         skey = server.lower()
-        nkey = irc.strings.lower(name)
+        nkey = str(irc.strings.lower(name))
         data = None
         if nkey in self.serverauths[skey] \
                 and datakey in self.serverauths[skey][nkey]:

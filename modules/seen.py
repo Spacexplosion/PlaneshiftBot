@@ -19,7 +19,7 @@ class IRCModule(modules.CommandMod):
         self.log = logging.getLogger("irc.seen")
 
     def _get_user(self, servkey, nick):
-        nickkey = irc.strings.lower(nick)
+        nickkey = str(irc.strings.lower(nick))
         if nickkey in self.db[servkey]:
             return self.db[servkey][nickkey]
         else:
@@ -31,7 +31,7 @@ class IRCModule(modules.CommandMod):
         user.lastaction = reason
         if chan is not None:
             user.lastchannel = chan
-        self.db[servkey][user.nick.lower()] = user
+        self.db[servkey][str(user.nick.lower())] = user
 
     def on_welcome(self, connection, event):
         self.db[irc.strings.FoldedCase(connection.server)] = \
@@ -45,7 +45,7 @@ class IRCModule(modules.CommandMod):
 
     def on_command(self, connection, commander, replyto, groups):
         servkey = connection.server.lower()
-        nickkey = irc.strings.lower(groups[0])
+        nickkey = str(irc.strings.lower(groups[0]))
         user = None
         if nickkey in self.db[servkey]:
             user = self.db[servkey][nickkey]
@@ -86,7 +86,7 @@ class IRCModule(modules.CommandMod):
         user = self._get_user(servkey, nick)
         user.lastspoke = datetime.utcnow()
         user.lastchannel = event.target
-        self.db[servkey][user.nick.lower()] = user
+        self.db[servkey][str(user.nick.lower())] = user
 
     def on_part(self, connection, event):
         servkey = connection.server.lower()
