@@ -9,13 +9,14 @@ class MemoMod(modules.CommandMod):
 
     Depends on authdata."""
 
-    pattern = re.compile("memo\s+(.+)")
+    patternstr = "memo\s+(.+)"
     IGNORE_PUBLIC = True
 
     JOIN_DELAY = 3
 
     def __init__(self):
         self.log = logging.getLogger("irc.memo")
+        self.__pattern = re.compile("^"+self.patternstr, re.UNICODE)
 
     def on_load(self, bot):
         super(IRCModule, self).on_load(bot)

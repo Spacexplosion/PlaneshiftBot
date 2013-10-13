@@ -6,7 +6,7 @@ import config
 class IRCModule(modules.CommandMod):
     """Display a custom message"""
 
-    pattern = re.compile("!info")
+    patternstr = "info"
     help = "Gets basic info on this bot"
 
     def on_command(self, connection, commander, replyto, groups):

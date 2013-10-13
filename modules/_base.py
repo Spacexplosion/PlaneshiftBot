@@ -1,5 +1,6 @@
 import irc
 import re
+import config
 
 class IRCModule(object):
     """Base class for all Planeshiftbot modules."""
@@ -16,10 +17,24 @@ class IRCModule(object):
 class CommandMod(IRCModule):
     """A superclass for IRCModules that should respond to a command."""
 
-    pattern = re.compile("^!(\S+)", re.UNICODE)
-    '''Regular expression to check against each message'''
+    patternstr = "(\S+)"
+    '''Regular expression capturing groups after command character'''
     IGNORE_PUBLIC = False
     '''When True, only respond over private query'''
+
+    @property
+    def pattern(self):
+        '''Regular expression to check against each message'''
+        return self.__pattern
+
+    def __new__(clazz):
+        inst = IRCModule.__new__(clazz)
+        if hasattr(config, "COMMAND_CHAR"):
+            inst.CMD_CHAR = config.COMMAND_CHAR
+        else:
+            inst.CMD_CHAR = '!'
+        inst.__pattern = re.compile("^"+inst.CMD_CHAR+inst.patternstr, re.UNICODE)
+        return inst
 
     def on_privmsg(self, connection, event):
         match = self.pattern.search(event.arguments[0])

@@ -39,6 +39,9 @@ LOGLEVEL = "INFO" # DEBUG, INFO, WARNING, ERROR
 
 ### Module configurations ###
 
+## Commands start with this character
+#COMMAND_CHAR='!'
+
 ## channels ##
 
 ## Join these channels : channel_name, [optional list of servers]

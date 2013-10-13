@@ -5,7 +5,7 @@ import modules
 class IRCModule(modules.CommandMod):
     """Display help messages from other modules"""
 
-    pattern = re.compile("!(triggers|help)\s?(\S+)?\s?(.+)?")
+    patternstr = "(triggers|help)\s?(\S+)?\s?(.+)?"
 
     def on_command(self, connection, commander, replyto, groups):
         response = "No help available for " + str(groups[1])
