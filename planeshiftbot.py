@@ -12,7 +12,6 @@ import getopt
 import irc
 import irc.client
 import irc.events
-import modules
 
 logging.basicConfig(format="%(name)s %(levelname)s: %(message)s",
                     level=logging.DEBUG,
@@ -48,6 +47,7 @@ class PlaneshiftBot:
 
     def __load_config(self, path):
         global config
+        global modules
         self.log.info("Loading config from %s", path)
         try:
             os.chdir(path)
@@ -61,6 +61,8 @@ class PlaneshiftBot:
                 hasattr(config, "MODULES")):
             self.log.critical("Necessary entries missing from config.py. Quitting...")
             sys.exit(1)
+
+        modules = __import__("modules")
 
         # set defaults
         if not hasattr(config, "SERVER_PROPS"):
