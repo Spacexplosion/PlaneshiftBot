@@ -20,8 +20,8 @@ class IRCModule(modules.CommandMod):
 
     def on_command(self, connection, commander, replyto, groups):
 
-        http = httplib.HTTPConnection("mymovieapi.com")
-        http.request("GET", "/?type=json&plot=full&title="
+        http = httplib.HTTPConnection("omdbapi.com")
+        http.request("GET", "/?plot=full&t="
                      + urllib.quote(groups[0]))
         resp = http.getresponse()
         if (resp.status == httplib.OK):
@@ -32,19 +32,19 @@ class IRCModule(modules.CommandMod):
                 self.log.error("Could not parse: " + respstr)
                 return
 
-            movtitle = movinfo[0]['title'].split("\n")
+            movtitle = movinfo['Title']
 
             connection.privmsg(replyto, \
                 str(movtitle) + 
-                " (" + str(movinfo[0]['year']) + ") " +
-                " Runtime: " + str(movinfo[0]['runtime']) +
-                " Rating: " + str(movinfo[0]['rating']) +
-                " Genre: " + str(movinfo[0]['genres']))
+                " (" + str(movinfo['Year']) + ") " +
+                " Runtime: " + str(movinfo['Runtime']) +
+                " Rating: " + str(movinfo['imdbRating']) +
+                " Genre: " + str(movinfo['Genre']))
             i = 0
-            if 'plot' in movinfo[0]:
-                while i < len(movinfo[0]['plot']):
+            if 'Plot' in movinfo:
+                while i < len(movinfo['Plot']):
                     connection.privmsg(replyto, \
-                                       movinfo[0]['plot'][i:i+self.maxPlotMsg])
+                                       movinfo['Plot'][i:i+self.maxPlotMsg])
                     i += self.maxPlotMsg
             else:
                 connection.privmsg(replyto, "There is no plot")
