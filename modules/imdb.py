@@ -49,5 +49,5 @@ class IRCModule(modules.CommandMod):
             else:
                 connection.privmsg(replyto, "There is no plot")
         else:
-            self.log.warning("HTTP Error: " + resp.status + resp.reason)
+            self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
         http.close()
