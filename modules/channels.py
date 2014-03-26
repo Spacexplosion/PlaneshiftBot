@@ -116,7 +116,7 @@ class IRCModule(modules.IRCModule):
         channel = self.serverchans[connection.server.lower()]\
                                   [irc.strings.lower(event.target)]
         channel.log.info("%s %s",
-                         event.source.nick,
+                         irc.client.NickMask(event.source).nick,
                          event.arguments[0])
 
     def on_nick(self, connection, event):
