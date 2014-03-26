@@ -178,9 +178,9 @@ class IRCModule(modules.IRCModule):
             del self.serverchans[servkey][chankey]
             if hasattr(config, "KICK_REJOIN_WAIT") \
                     and config.KICK_REJOIN_WAIT > 0:
-                connection.ircobj.execute_delayed(config.KICK_REJOIN_WAIT,
-                                                     connection.join,
-                                                     (channel.name,))
+                connection.execute_delayed(config.KICK_REJOIN_WAIT,
+                                           connection.join,
+                                           (channel.name,))
 
     def on_quit(self, connection, event):
         quitter = event.source.nick
