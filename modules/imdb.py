@@ -32,6 +32,10 @@ class IRCModule(modules.CommandMod):
                 self.log.error("Could not parse: " + respstr)
                 return
 
+            if (movinfo['Response'] == "False"):
+                connection.privmsg(replyto, "No results.")
+                return
+            
             movtitle = movinfo['Title']
 
             connection.privmsg(replyto, \
