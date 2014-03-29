@@ -17,5 +17,5 @@ class IRCModule(modules.CommandMod):
         self.log = logging.getLogger("irc.flip")
 
     def on_command(self, connection, commander, replyto, groups):
-        response = u"(\u256F\u00B0\u25A1\u00B0)\u256F " + upsidedown.transform(groups[0])
+        response = u"(\u256F\u00B0\u25A1\u00B0)\u256F \uFE35 " + upsidedown.transform(groups[0])
         connection.privmsg(replyto, response)
