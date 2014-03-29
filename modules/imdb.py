@@ -7,7 +7,7 @@ import modules
 import config
 
 class IRCModule(modules.CommandMod):
-    """Display a custom message"""
+    """Print IMDb movie info to the channel"""
 
     patternstr = "imdb\s+(.+)"
     help = "Gets basic info on this bot"
