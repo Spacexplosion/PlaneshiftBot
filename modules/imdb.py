@@ -1,6 +1,7 @@
 import httplib
 import urllib
 import re
+import string
 import irc
 import logging
 import modules
@@ -44,12 +45,17 @@ class IRCModule(modules.CommandMod):
                 " Runtime: " + str(movinfo['Runtime']) +
                 " Rating: " + str(movinfo['imdbRating']) +
                 " Genre: " + str(movinfo['Genre']))
-            i = 0
-            if 'Plot' in movinfo:
-                while i < len(movinfo['Plot']):
+            start = 0
+            if 'Plot' in movinfo and movinfo['Plot'] != "N/A":
+                while start < len(movinfo['Plot']):
+                    end = -1
+                    if start+self.maxPlotMsg < len(movinfo['Plot']):
+                        end = string.rfind(movinfo['Plot'], ' ', start, start+self.maxPlotMsg)
+                    if (end == -1):
+                        end = start+self.maxPlotMsg
                     connection.privmsg(replyto, \
-                                       movinfo['Plot'][i:i+self.maxPlotMsg])
-                    i += self.maxPlotMsg
+                                       movinfo['Plot'][start:end])
+                    start = end
             else:
                 connection.privmsg(replyto, "There is no plot")
         else:
