@@ -37,24 +37,26 @@ class IRCModule(modules.CommandMod):
                 connection.privmsg(replyto, "No results.")
                 return
             
-            movtitle = movinfo['Title']
+            movtitle = movinfo['Title'].decode('utf-8', 'ignore')
 
             connection.privmsg(replyto, \
-                str(movtitle) + 
-                " (" + str(movinfo['Year']) + ") " +
-                " Runtime: " + str(movinfo['Runtime']) +
-                " Rating: " + str(movinfo['imdbRating']) +
-                " Genre: " + str(movinfo['Genre']))
+                movtitle + 
+                " (" + movinfo['Year'].decode('utf-8', 'ignore') + ") " +
+                " Runtime: " + movinfo['Runtime'].decode('utf-8', 'ignore') +
+                " Rating: " + movinfo['imdbRating'].decode('utf-8', 'ignore') +
+                " Genre: " + movinfo['Genre'].decode('utf-8', 'ignore'))
+
             start = 0
             if 'Plot' in movinfo and movinfo['Plot'] != "N/A":
-                while start < len(movinfo['Plot']):
+                plot = movinfo['Plot'].decode('utf-8', 'ignore')
+                while start < len(plot):
                     end = -1
-                    if start+self.maxPlotMsg < len(movinfo['Plot']):
-                        end = string.rfind(movinfo['Plot'], ' ', start, start+self.maxPlotMsg)
+                    if start+self.maxPlotMsg < len(plot):
+                        end = string.rfind(plot, ' ', start, start+self.maxPlotMsg)
                     if (end == -1):
                         end = start+self.maxPlotMsg
                     connection.privmsg(replyto, \
-                                       movinfo['Plot'][start:end])
+                                       plot[start:end])
                     start = end
             else:
                 connection.privmsg(replyto, "There is no plot")
