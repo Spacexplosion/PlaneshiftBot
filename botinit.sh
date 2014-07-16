@@ -21,7 +21,7 @@ fi
 
 case "$1" in
     start|restart)
-	if [[ -z "$pid" || `kill -CONT $pid &> /dev/null` ]]; then
+	if [[ -z "$pid" || ! -e /proc/$pid ]]; then
 	    su $botuser -c "/opt/psbot/planeshiftbot.py -d -c "~$botuser" > /dev/null"
 	    echo "0,10,20,30,40,50 *	* * *	root	/etc/init.d/$botuser restart" > /etc/cron.d/$botuser
 	fi
