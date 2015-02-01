@@ -1,6 +1,6 @@
 Requirements:
 python (2.5+ required, 2.7 recommended*, 3.0+ not tested)
-python-irclib 8.0.1
+python-irclib (8.0.1 | 8.5.3)
 
 * 2.7 for this fix: http://bugs.python.org/issue8117
 
