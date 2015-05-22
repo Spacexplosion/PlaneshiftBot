@@ -10,7 +10,7 @@ import config
 class IRCModule(modules.CommandMod):
     """Print IMDb movie info to the channel"""
 
-    patternstr = "imdb\s+(.+)"
+    _pattern_init = "imdb\s+(.+)"
     help = "!imdb <movie name>"
 
     # "PRIVMSG %s :%s" limited to 512 bytes including CR/LF

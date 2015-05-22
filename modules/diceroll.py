@@ -6,14 +6,13 @@ import modules
 class IRCModule(modules.CommandMod):
     """Roll a combination of virtual dice"""
 
-    patternstr = "roll (\d+)d(\d+)([+-]\d+)?"
-
     help = "!roll <number>d<sides>[(+|-)<modifier>]"
 
     def __init__(self):
         modules.IRCModule.__init__(self)
-        self.__pattern = re.compile("^"+self.CMD_CHAR+self.patternstr,
-                                    re.UNICODE | re.IGNORECASE)
+        self.pattern = re.compile("^"+self.CMD_CHAR + \
+                                  "roll (\d+)d(\d+)([+-]\d+)?",
+                                  re.UNICODE | re.IGNORECASE)
 
     def on_command(self, connection, commander, replyto, groups):
         n = s = m = sum = 0
