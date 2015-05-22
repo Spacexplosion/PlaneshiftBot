@@ -7,6 +7,7 @@ class LogBot(modules.IRCModule):
     """Log all events supported by irclib"""
 
     def __init__(self):
+        super(IRCModule, self).__init__()
         self.log = logging.getLogger("irc.raw")
 
     def on_all_events(self, connection, event):

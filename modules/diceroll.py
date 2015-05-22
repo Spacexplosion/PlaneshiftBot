@@ -11,6 +11,7 @@ class IRCModule(modules.CommandMod):
     help = "!roll <number>d<sides>[(+|-)<modifier>]"
 
     def __init__(self):
+        modules.IRCModule.__init__(self)
         self.__pattern = re.compile("^"+self.CMD_CHAR+self.patternstr,
                                     re.UNICODE | re.IGNORECASE)
 

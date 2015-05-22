@@ -11,6 +11,7 @@ class IRCModule(modules.IRCModule):
     Depends on qauth (or maybe others later)."""
 
     def __init__(self):
+        super(IRCModule, self).__init__()
         self.serverauths = {}
         self.servermods = {}
         self.dummyauth = DummyAuthMod()

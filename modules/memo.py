@@ -15,6 +15,7 @@ class MemoMod(modules.CommandMod):
     JOIN_DELAY = 3
 
     def __init__(self):
+        modules.IRCModule.__init__(self)
         self.log = logging.getLogger("irc.memo")
         self.__pattern = re.compile("^"+self.patternstr, re.UNICODE)
 

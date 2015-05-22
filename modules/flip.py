@@ -14,6 +14,7 @@ class IRCModule(modules.CommandMod):
     help = "!flip <text>"
 
     def __init__(self):
+        super(IRCModule, self).__init__()
         self.log = logging.getLogger("irc.flip")
 
     def on_command(self, connection, commander, replyto, groups):

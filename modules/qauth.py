@@ -12,6 +12,7 @@ class IRCModule(modules.IRCModule):
     #TODO Figure a way to recognize users auth'd after join
 
     def __init__(self):
+        super(IRCModule, self).__init__()
         self.serverusers = {}
         self.chanmod = None
         self.log = logging.getLogger("irc.qauth")

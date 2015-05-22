@@ -17,6 +17,7 @@ class IRCModule(modules.CommandMod):
     maxPlotMsg = 400
 
     def __init__(self):
+        super(IRCModule, self).__init__()
         self.log = logging.getLogger("irc.imdb")
 
     def on_command(self, connection, commander, replyto, groups):

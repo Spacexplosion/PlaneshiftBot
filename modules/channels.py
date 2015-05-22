@@ -10,6 +10,7 @@ class IRCModule(modules.IRCModule):
     """Join/administrate channels and track users in them"""
 
     def __init__(self):
+        super(IRCModule, self).__init__()
         self.serverchans = {}
         self.log = logging.getLogger("irc.channels")
 

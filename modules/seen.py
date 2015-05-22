@@ -15,6 +15,7 @@ class IRCModule(modules.CommandMod):
     help = "!seen <nick>"
 
     def __init__(self):
+        super(IRCModule, self).__init__()
         self.db = {}
         self.log = logging.getLogger("irc.seen")
 
