@@ -11,7 +11,7 @@ class IRCModule(modules.CommandMod):
     """Print IMDb movie info to the channel"""
 
     patternstr = "imdb\s+(.+)"
-    help = "Gets basic info on this bot"
+    help = "!imdb <movie name>"
 
     # "PRIVMSG %s :%s" limited to 512 bytes including CR/LF
     maxPlotMsg = 400

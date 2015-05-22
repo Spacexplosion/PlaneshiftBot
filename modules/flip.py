@@ -11,7 +11,7 @@ class IRCModule(modules.CommandMod):
     Requires upsidedown package. (https://pypi.python.org/pypi/upsidedown)"""
 
     patternstr = "flip\s+(.+)"
-    help = "Gets basic info on this bot"
+    help = "!flip <text>"
 
     def __init__(self):
         self.log = logging.getLogger("irc.flip")
