@@ -28,13 +28,26 @@ class IRCModule(modules.TriggerMod):
                                developerKey=config.YOUTUBE_API_KEY)
 
     def on_trigger(self, connection, commander, replyto, groups):
-        request = self.YTservice.videos().list(part="contentDetails,snippet",
+        request = self.YTservice.videos().list(part="snippet,contentDetails,statistics",
                                                id=groups[2])
         result = request.execute()
         if len(result.items()) > 0:
             title = result['items'][0]['snippet']['title']
+            chan = result['items'][0]['snippet']['channelTitle']
+            (dura_m, dura_s) = time_parse(result['items'][0]['contentDetails']['duration'])
+            views = result['items'][0]['statistics']['viewCount']
+            likes = result['items'][0]['statistics']['likeCount']
+            hates = result['items'][0]['statistics']['dislikeCount']
             connection.privmsg(replyto,
-                               "[YouTube video] Title: \x02%s\x0f " % \
-                               title)
+                               "[YouTube video] Title: \x02%s\x0f | Duration: %s:%s | Channel: %s | Views: %s | Likes: \x0303%s\x0f | Dislikes: \x0304%s\x0f" % \
+                               (title, dura_m, dura_s, chan, views, likes, hates))
         else:
             connection.privmsg(replyto, "No video found for id:" + groups[2])
+
+re_time_parse = re.compile("PT(([0-9]+)M)?([0-9]+)S")
+def time_parse(ptstr):
+    m = '0'
+    match = re_time_parse.search(ptstr)
+    if not match.groups()[1] is None:
+        m = match.groups()[1]
+    return (m, match.groups()[2])
