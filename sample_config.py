@@ -22,6 +22,9 @@ SERVER_PROPS = [ # matching order with SERVER_LIST
     {#"QAUTH_USER" : "user",
      #"QAUTH_PASS" : "password",
      #"AUTHDATA_MOD" : "qauth",
+     #"NICKSERV_MASK" : "NickServ!*@*",
+     #"NICKSERV_PROMPT" : ".*IDENTIFY.*",
+     #"NICKSERV_PASS" : "password",
      #<module_specific_key> : <module_specific_value>,
     },
 ]
