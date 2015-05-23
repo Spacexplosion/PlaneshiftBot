@@ -16,6 +16,7 @@ MODULES = [
     "help",
     "info",
     "seen",
+    #"ytlinkinfo" # requires installation of google-api-python-client
 ]
 SERVER_PROPS = [ # matching order with SERVER_LIST
     {#"QAUTH_USER" : "user",
@@ -71,3 +72,8 @@ INFO_STRING = "I'm a PlaneshiftBot!"
 ## memo ##
 ## wait time after a join before querying for unread memos (<= 0 is off)
 #MEMO_JOIN_DELAY = 3
+
+## ytlinkinfo ##
+## A developer's key is required to use the API, you can get one free at
+##  https://console.developers.google.com/
+#YOUTUBE_API_KEY= "key goes here"
