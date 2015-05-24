@@ -9,7 +9,7 @@ from apiclient.discovery import build
 class IRCModule(modules.TriggerMod):
     """Recognize YouTube links and print video info"""
 
-    _pattern_init = "http(s)?://(youtu.be/|www.youtube.com/watch\?v=)([^&?]+).*"
+    _pattern_init = "http(s)?://(youtu.be/|www.youtube.com/watch\?(.+&)v=)([^&?]+).*"
 
     API_VERSION = "v3"
     
@@ -28,8 +28,9 @@ class IRCModule(modules.TriggerMod):
                                developerKey=config.YOUTUBE_API_KEY)
 
     def on_trigger(self, connection, commander, replyto, groups):
+        ytid = groups[3]
         request = self.YTservice.videos().list(part="snippet,contentDetails,statistics",
-                                               id=groups[2])
+                                               id=ytid)
         result = request.execute()
         if len(result.items()) > 0:
             title = result['items'][0]['snippet']['title']
@@ -42,7 +43,7 @@ class IRCModule(modules.TriggerMod):
                                "[YouTube video] Title: \x02%s\x0f | Duration: %s:%s | Channel: %s | Views: %s | Likes: \x0303%s\x0f | Dislikes: \x0304%s\x0f" % \
                                (title, dura_m, dura_s, chan, views, likes, hates))
         else:
-            connection.privmsg(replyto, "No video found for id:" + groups[2])
+            connection.privmsg(replyto, "No video found for id:" + ytid)
 
 re_time_parse = re.compile("PT(([0-9]+)M)?([0-9]+)S")
 def time_parse(ptstr):
