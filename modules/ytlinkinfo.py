@@ -45,10 +45,13 @@ class IRCModule(modules.TriggerMod):
         else:
             connection.privmsg(replyto, "No video found for id:" + ytid)
 
-re_time_parse = re.compile("PT(([0-9]+)M)?([0-9]+)S")
+re_time_parse = re.compile("PT(([0-9]+)M)?(([0-9]+)S)?")
 def time_parse(ptstr):
     m = '0'
+    s = '00'
     match = re_time_parse.search(ptstr)
     if not match.groups()[1] is None:
         m = match.groups()[1]
-    return (m, match.groups()[2])
+    if not match.groups()[3] is None:
+        s = match.groups()[3].zfill(2)
+    return (m, s)
