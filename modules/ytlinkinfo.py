@@ -32,7 +32,7 @@ class IRCModule(modules.TriggerMod):
         request = self.YTservice.videos().list(part="snippet,contentDetails,statistics",
                                                id=ytid)
         result = request.execute()
-        if len(result.items()) > 0:
+        if len(result['items']) > 0:
             title = result['items'][0]['snippet']['title']
             chan = result['items'][0]['snippet']['channelTitle']
             (dura_m, dura_s) = time_parse(result['items'][0]['contentDetails']['duration'])
