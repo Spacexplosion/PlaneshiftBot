@@ -1,5 +1,6 @@
 import httplib
 import urllib
+import json
 import re
 import string
 import irc
@@ -21,23 +22,53 @@ class IRCModule(modules.CommandMod):
         self.log = logging.getLogger("irc.imdb")
 
     def on_command(self, connection, commander, replyto, groups):
+        self.log.debug("Searching OMDb for \""+ groups[0] +"\"")
 
+        # Blocking call to search OMDb API
         http = httplib.HTTPConnection("omdbapi.com")
-        http.request("GET", "/?plot=full&t="
+        http.request("GET", "/?s="
                      + urllib.quote(groups[0]))
         resp = http.getresponse()
         if (resp.status == httplib.OK):
             respstr = resp.read()
             try:
-                movinfo = eval(respstr)
-            except (SyntaxError):
+                results = json.loads(respstr)
+            except (ValueError):
                 self.log.error("Could not parse: " + respstr)
                 return
 
-            if (movinfo['Response'] == "False"):
+            if 'Response' in results and results['Response'] == "False":
                 connection.privmsg(replyto, "No results.")
                 return
+
+            #Pick from search results by year or first
+            if 'Search' in results:
+                movinfo = results['Search'][0]
+            else:
+                self.log.error("Search returned invalid results")
+                connection.privmsg(replyto, "No valid results.")
+                return
+        else:
+            self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
+            connection.privmsg(replyto, "Service unavailable. Try again later.")
+            return
             
+        # Second request for movie details
+        http.request("GET", "/?plot=full&i=" + movinfo['imdbID'])
+        resp = http.getresponse()
+        if (resp.status == httplib.OK):
+            respstr = resp.read()
+            try:
+                movinfo = json.loads(respstr)
+            except (ValueError):
+                self.log.error("Could not parse: " + respstr)
+                return
+
+            if 'Response' in movinfo and movinfo['Response'] == "False":
+                self.log.error("Failed to lookup ID for search result")
+                connection.privmsg(replyto, "No valid results.")
+                return
+
             movtitle = movinfo['Title'].decode('utf-8', 'ignore')
 
             connection.privmsg(replyto, \
@@ -63,4 +94,6 @@ class IRCModule(modules.CommandMod):
                 connection.privmsg(replyto, "There is no plot")
         else:
             self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
+            connection.privmsg(replyto, "Service unavailable. Try again later.")
+
         http.close()
