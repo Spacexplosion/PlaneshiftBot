@@ -11,8 +11,8 @@ import config
 class IRCModule(modules.CommandMod):
     """Print IMDb movie info to the channel"""
 
-    _pattern_init = "imdb\s+(.+)"
-    help = "!imdb <movie name>"
+    _pattern_init = "imdb\s+(?:@([0-9]{4})\s+)?(.+)"
+    help = "!imdb [@<year>] <movie name>"
 
     # "PRIVMSG %s :%s" limited to 512 bytes including CR/LF
     maxPlotMsg = 400
@@ -22,33 +22,50 @@ class IRCModule(modules.CommandMod):
         self.log = logging.getLogger("irc.imdb")
 
     def on_command(self, connection, commander, replyto, groups):
-        self.log.debug("Searching OMDb for \""+ groups[0] +"\"")
+        arg_year = groups[0]
+        arg_title = groups[1]
+        self.log.debug("Searching OMDb for \""+ arg_title +"\" ("+ str(arg_year) +")")
 
         # Blocking call to search OMDb API
         http = httplib.HTTPConnection("omdbapi.com")
         http.request("GET", "/?s="
-                     + urllib.quote(groups[0]))
+                     + urllib.quote(arg_title))
         resp = http.getresponse()
         if (resp.status == httplib.OK):
             respstr = resp.read()
             try:
-                results = json.loads(respstr)
+                searchResult = json.loads(respstr)
             except (ValueError):
                 self.log.error("Could not parse: " + respstr)
                 return
 
-            if 'Response' in results and results['Response'] == "False":
+            if 'Response' in searchResult \
+               and searchResult['Response'] == "False":
                 connection.privmsg(replyto, "No results.")
                 return
 
-            #Pick from search results by year or first
-            if 'Search' in results:
-                movinfo = results['Search'][0]
+            # Pick from search results by year or first
+            if 'Search' in searchResult:
+                result_list = searchResult['Search']
+                movcount = len(result_list)
+                result_years = [r["Year"] for r in result_list]
+                if arg_year is None:
+                    movinfo = result_list[0]
+                    del result_years[0]
+                else:
+                    movinfo = None
+                    for r in result_list:
+                        if r["Year"] == arg_year:
+                            movinfo = r
+                            break
+                    if movinfo is None:
+                        connection.privmsg(replyto, "No matches for that year.")
+                        return
             else:
                 self.log.error("Search returned invalid results")
                 connection.privmsg(replyto, "No valid results.")
                 return
-        else:
+        else: #response status not OK
             self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
             connection.privmsg(replyto, "Service unavailable. Try again later.")
             return
@@ -92,7 +109,17 @@ class IRCModule(modules.CommandMod):
                     start = end
             else:
                 connection.privmsg(replyto, "There is no plot")
-        else:
+
+            # Warn about more results
+            if arg_year is None and len(result_years) > 0:
+                yearsstr = "("+ result_years[0]
+                for y in result_years[1:]:
+                    yearsstr += ", "+ y
+                yearsstr += ")"
+                connection.privmsg(replyto, "More results for other years "
+                                   + yearsstr 
+                                   +". Try again starting with @<year>")
+        else: #response status not OK
             self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
             connection.privmsg(replyto, "Service unavailable. Try again later.")
 
