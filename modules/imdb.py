@@ -28,52 +28,12 @@ class IRCModule(modules.CommandMod):
 
         # Blocking call to search OMDb API
         http = httplib.HTTPConnection("omdbapi.com")
-        http.request("GET", "/?s="
-                     + urllib.quote(arg_title))
+        querystr = "/?plot=full&t=" + arg_title
+        if arg_year is not None:
+            querystr += "&y=" + arg_year
+        http.request("GET", querystr)
         resp = http.getresponse()
-        if (resp.status == httplib.OK):
-            respstr = resp.read()
-            try:
-                searchResult = json.loads(respstr)
-            except (ValueError):
-                self.log.error("Could not parse: " + respstr)
-                return
-
-            if 'Response' in searchResult \
-               and searchResult['Response'] == "False":
-                connection.privmsg(replyto, "No results.")
-                return
-
-            # Pick from search results by year or first
-            if 'Search' in searchResult:
-                result_list = searchResult['Search']
-                movcount = len(result_list)
-                result_years = [r["Year"] for r in result_list]
-                if arg_year is None:
-                    movinfo = result_list[0]
-                    del result_years[0]
-                else:
-                    movinfo = None
-                    for r in result_list:
-                        if r["Year"] == arg_year:
-                            movinfo = r
-                            break
-                    if movinfo is None:
-                        connection.privmsg(replyto, "No matches for that year.")
-                        return
-            else:
-                self.log.error("Search returned invalid results")
-                connection.privmsg(replyto, "No valid results.")
-                return
-        else: #response status not OK
-            self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
-            connection.privmsg(replyto, "Service unavailable. Try again later.")
-            return
-            
-        # Second request for movie details
-        http.request("GET", "/?plot=full&i=" + movinfo['imdbID'])
-        resp = http.getresponse()
-        if (resp.status == httplib.OK):
+        if resp.status == httplib.OK:
             respstr = resp.read()
             try:
                 movinfo = json.loads(respstr)
@@ -102,7 +62,7 @@ class IRCModule(modules.CommandMod):
                     end = -1
                     if start+self.maxPlotMsg < len(plot):
                         end = string.rfind(plot, ' ', start, start+self.maxPlotMsg)
-                    if (end == -1):
+                    if end == -1:
                         end = start+self.maxPlotMsg
                     connection.privmsg(replyto, \
                                        plot[start:end])
@@ -110,17 +70,51 @@ class IRCModule(modules.CommandMod):
             else:
                 connection.privmsg(replyto, "There is no plot")
 
-            # Warn about more results
-            if arg_year is None and len(result_years) > 0:
-                yearsstr = "("+ result_years[0]
-                for y in result_years[1:]:
-                    yearsstr += ", "+ y
-                yearsstr += ")"
-                connection.privmsg(replyto, "More results for other years "
-                                   + yearsstr 
-                                   +". Try again starting with @<year>")
         else: #response status not OK
             self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
             connection.privmsg(replyto, "Service unavailable. Try again later.")
 
+        # Second request for multiple results for no specific year
+        if arg_year is None:
+            http.request("GET", "/?s="
+                         + urllib.quote(arg_title))
+            resp = http.getresponse()
+            if resp.status == httplib.OK:
+                respstr = resp.read()
+                try:
+                    searchResult = json.loads(respstr)
+                except (ValueError):
+                    self.log.error("Could not parse: " + respstr)
+                    return
+
+                if 'Response' in searchResult \
+                   and searchResult['Response'] == "False":
+                    return
+
+                if 'Search' in searchResult:
+                    result_list = searchResult['Search']
+                    movcount = len(result_list)
+                    result_years = [r["Year"] for r in result_list]
+                    #first result should always be same as title query but isn't
+                    for i in xrange(len(result_years)):
+                        if movinfo["Year"] == result_years[i]:
+                            del result_years[i]
+                            break
+                    
+                    if len(result_years) > 0:
+                        yearsstr = "("+ result_years[0]
+                        for y in result_years[1:]:
+                            yearsstr += ", "+ y
+                        yearsstr += ")"
+                        connection.privmsg(replyto, "More results for other years "
+                                           + yearsstr 
+                                           +". Try again starting with @<year>")
+
+                else:
+                    self.log.error("Search returned invalid results")
+                    return
+            else: #response status not OK
+                self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
+                return
+        
         http.close()
