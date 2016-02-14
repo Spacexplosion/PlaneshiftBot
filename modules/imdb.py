@@ -73,6 +73,7 @@ class IRCModule(modules.CommandMod):
         else: #response status not OK
             self.log.warning("HTTP Error " + str(resp.status) +": "+ resp.reason)
             connection.privmsg(replyto, "Service unavailable. Try again later.")
+            return
 
         # Second request for multiple results for no specific year
         if arg_year is None:
