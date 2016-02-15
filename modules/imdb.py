@@ -46,18 +46,18 @@ class IRCModule(modules.CommandMod):
                 connection.privmsg(replyto, "No valid results.")
                 return
 
-            movtitle = movinfo['Title'].decode('utf-8', 'ignore')
+            movtitle = movinfo['Title']
 
             connection.privmsg(replyto, \
                 movtitle + 
-                " (" + movinfo['Year'].decode('utf-8', 'ignore') + ") " +
-                " Runtime: " + movinfo['Runtime'].decode('utf-8', 'ignore') +
-                " Rating: " + movinfo['imdbRating'].decode('utf-8', 'ignore') +
-                " Genre: " + movinfo['Genre'].decode('utf-8', 'ignore'))
+                " (" + movinfo['Year'] + ") " +
+                " Runtime: " + movinfo['Runtime'] +
+                " Rating: " + movinfo['imdbRating'] +
+                " Genre: " + movinfo['Genre'])
 
             start = 0
             if 'Plot' in movinfo and movinfo['Plot'] != "N/A":
-                plot = movinfo['Plot'].decode('utf-8', 'ignore')
+                plot = movinfo['Plot']
                 while start < len(plot):
                     end = -1
                     if start+self.maxPlotMsg < len(plot):
