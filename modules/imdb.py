@@ -28,7 +28,7 @@ class IRCModule(modules.CommandMod):
 
         # Blocking call to search OMDb API
         http = httplib.HTTPConnection("omdbapi.com")
-        querystr = "/?plot=full&t=" + arg_title
+        querystr = "/?plot=full&t=" + urllib.quote(arg_title)
         if arg_year is not None:
             querystr += "&y=" + arg_year
         http.request("GET", querystr)
