@@ -9,7 +9,7 @@ from apiclient.discovery import build
 class IRCModule(modules.TriggerMod):
     """Recognize YouTube links and print video info"""
 
-    _pattern_init = "http(s)?://(youtu.be/|www.youtube.com/watch\?(.+&)?v=)([^&? ]+).*"
+    _pattern_init = "http(s)?://(youtu.be/|www.youtube.com/watch\?(.+&)?v=)([^&?# ]+).*"
 
     API_VERSION = "v3"
     
