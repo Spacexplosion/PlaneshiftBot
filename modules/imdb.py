@@ -42,7 +42,7 @@ class IRCModule(modules.CommandMod):
                 return
 
             if 'Response' in movinfo and movinfo['Response'] == "False":
-                self.log.error("Failed to lookup ID for search result")
+                self.log.error("Failed to lookup movie info")
                 connection.privmsg(replyto, "No valid results.")
                 return
 
@@ -50,6 +50,7 @@ class IRCModule(modules.CommandMod):
 
             connection.privmsg(replyto, \
                 movtitle + 
+
                 " (" + movinfo['Year'] + ") " +
                 " Runtime: " + movinfo['Runtime'] +
                 " Rating: " + movinfo['imdbRating'] +
@@ -90,6 +91,7 @@ class IRCModule(modules.CommandMod):
 
                 if 'Response' in searchResult \
                    and searchResult['Response'] == "False":
+                    self.log.error("Failed to get movie search")
                     return
 
                 if 'Search' in searchResult:
