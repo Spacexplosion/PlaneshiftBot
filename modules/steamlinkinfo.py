@@ -51,7 +51,7 @@ class IRCModule(modules.TriggerMod):
             return
 
         data = appdetails[app_id]['data']
-        answer = data['name'] + \
+        answer = "[Steam] "+ data['name'] + \
                  " (" + data['release_date']['date'] +"); "
         if 'price_overview' in data:
             answer += str(data['price_overview']['final']/100.0) \
@@ -64,11 +64,10 @@ class IRCModule(modules.TriggerMod):
         if 'metacritic' in data:
             answer += " Metacritic: "+ str(data['metacritic']['score']) +"/100"
         connection.privmsg(replyto, answer)
+        about = re.sub("(<[^>]*>)|\r", "", data['about_the_game'])
         if len(data['about_the_game']) > self.maxAboutMsg:
             end = string.rfind(data['about_the_game'], ' ', 0, self.maxAboutMsg)
-            about = data['about_the_game'][:end] + "..."
-        else:
-            about = data['about_the_game']
+            about = about[:end] + "..."
         connection.privmsg(replyto, about)
 
     def _invalidResult(self, connection, replyto, logmsg):
