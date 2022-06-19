@@ -38,10 +38,10 @@ class IRCModule(modules.TriggerMod):
             (dura_m, dura_s) = time_parse(result['items'][0]['contentDetails']['duration'])
             views = result['items'][0]['statistics']['viewCount']
             likes = result['items'][0]['statistics']['likeCount']
-            hates = result['items'][0]['statistics']['dislikeCount']
+            #hates = result['items'][0]['statistics']['dislikeCount']
             connection.privmsg(replyto,
-                               "[YouTube video] Title: \x02%s\x0f | Duration: %s:%s | Channel: %s | Views: %s | Likes: \x0303%s\x0f | Dislikes: \x0304%s\x0f" % \
-                               (title, dura_m, dura_s, chan, views, likes, hates))
+                               "[YouTube video] Title: \x02%s\x0f | Duration: %s:%s | Channel: %s | Views: %s | Likes: \x0303%s\x0f" % \
+                               (title, dura_m, dura_s, chan, views, likes))
         else:
             connection.privmsg(replyto, "No video found for id:" + ytid)
 
