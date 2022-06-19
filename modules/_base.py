@@ -1,5 +1,6 @@
 import irc
 import re
+import logging
 import config
 
 class IRCModule(object):
@@ -43,20 +44,29 @@ class CommandMod(IRCModule):
 
     def __init__(self):
         super(CommandMod, self).__init__()
+        self.log = logging.getLogger("irc.modules")
         self.__pattern = re.compile("^"+self.CMD_CHAR+self._pattern_init, re.UNICODE)
         
     def on_privmsg(self, connection, event):
-        match = self.pattern.search(event.arguments[0])
-        if match:
-            self.on_command(connection, event.source, 
-                            event.source.nick, match.groups())
+        try:
+            match = self.pattern.search(event.arguments[0])
+            if match:
+                self.log.debug("command match detected in privmsg: %s", self.pattern)
+                self.on_command(connection, event.source, 
+                                event.source.nick, match.groups())
+        except Exception as e:
+            self.log.exception("Command error: %s", e)
 
     def on_pubmsg(self, connection, event):
         if not self.IGNORE_PUBLIC:
-            match = self.pattern.search(event.arguments[0])
-            if match:
-                self.on_command(connection, event.source, 
-                                event.target, match.groups())
+            try:
+                match = self.pattern.search(event.arguments[0])
+                if match:
+                    self.log.debug("command match detected in pubmsg: %s", self.pattern)
+                    self.on_command(connection, event.source, 
+                                    event.target, match.groups())
+            except Exception as e:
+                self.log.exception("Command error: %s", e)
 
     def on_command(self, connection, commander, replyto, groups):
         """Called when self.pattern matches a message.
